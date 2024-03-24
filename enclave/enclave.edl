@@ -1,0 +1,73 @@
+enclave {
+
+    // includes
+    include "myEigenFunctions.h"
+
+    // define OCALLs
+    untrusted {
+        double** ocall_ReadData(
+            string inputFileName, 
+            int n, 
+            int m
+        );
+
+        void ocall_print_matrix(
+            [in, size=n*m] double **A, 
+            int n, 
+            int m
+        );
+
+        void ocall_print_matrix(
+            [in, size=n] double *v, 
+            int n
+        );
+    };
+
+
+    // define ECALLs
+    trusted {
+        public double ecall_DotProduct(
+            [in, size=n*m] double **A, 
+            [in, size=n*m] double **B, 
+            int n, 
+            int m
+        );
+
+        public double ecall_DotProduct(
+            [in, size=n] double *A, 
+            [in, size=n] double *B, 
+            int n
+        );
+
+        public double* ecall_DotProduct(
+            [in, size=n*n] double **A, 
+            [in, size=n] double *v, 
+            int n
+        );
+
+        public double** ecall_CenterMatrix(
+            [in, size=n*m] double **A, 
+            int n, 
+            int m
+        );
+
+        public double** ecall_CovarianceMatrix(
+            [in, size=n*m] double **A, 
+            int n, 
+            int m
+        );
+
+        public Eigenpair ecall_power_method(
+            [in, size=n*n] double **A, 
+            [in, size=n] double *v, 
+            int n, 
+            double tol
+        );
+
+        public void ecall_deflate(
+            [in, size=eigenpair.length*eigenpair.length] double **A, 
+            Eigenpair eigenpair
+        );
+
+    };
+};
