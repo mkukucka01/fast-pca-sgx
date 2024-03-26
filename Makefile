@@ -101,7 +101,7 @@ endif
 
 App_Cpp_Objects := $(App_Cpp_Files:.cpp=.o)
 
-App_Name := sgx-wallet
+App_Name := fast-pca-sgx
 
 ######## Enclave Settings ########
 

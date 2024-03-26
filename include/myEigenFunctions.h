@@ -2,7 +2,7 @@
 #define MYEIGENFUNCTIONS_H_
 
 #include <math.h>
-#include <string>
+#include <string.h>
 #include <vector>
 #include <sstream> //istringstream
 #include <iostream> // cout
@@ -16,7 +16,7 @@ struct Eigenpair {
   int length; //Length of eigenvector
   void normalize() {
     // Set eigenvalue to norm of vector and normalize eigenvector
-    value = sqrt(DotProduct(vector, vector, length));
+    value = sqrt(ecall_DotProduct_vv(vector, vector, length));
     for (int i=0; i<length; i++)
       vector[i]/= value;
   }; //
@@ -30,7 +30,6 @@ struct Eigenpair {
   // Constructor
   // Attribute value is set to 0.0 and attribute vector to an array of doubles with length n
   Eigenpair(const int n) : value(0.0), length(n), vector(new double[n]) {} //Constructor
-
 };
 
 #endif // MYEIGENFUNCTIONS_H_

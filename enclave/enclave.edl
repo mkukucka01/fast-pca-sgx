@@ -3,70 +3,63 @@ enclave {
     // includes
     include "myEigenFunctions.h"
 
-    // define OCALLs
-    untrusted {
-        double** ocall_ReadData(
-            string inputFileName, 
-            int n, 
-            int m
-        );
-
-        void ocall_print_matrix(
-            [in, size=n*m] double **A, 
-            int n, 
-            int m
-        );
-
-        void ocall_print_matrix(
-            [in, size=n] double *v, 
-            int n
-        );
-    };
-
+    /* Import ECALL/OCALL from sub-directory EDLs.
+     *  [from]: specifies the location of EDL file. 
+     *  [import]: specifies the functions to import, 
+     *  [*]: implies to import all functions.
+     */
+    
+    from "Edger8rSyntax/Types.edl" import *;
+    from "Edger8rSyntax/Pointers.edl" import *;
+    from "Edger8rSyntax/Arrays.edl" import *;
+    from "Edger8rSyntax/Functions.edl" import *;
 
     // define ECALLs
     trusted {
-        public double ecall_DotProduct(
-            [in, size=n*m] double **A, 
-            [in, size=n*m] double **B, 
+        public double ecall_DotProduct_aa(
+            [in, count=len] double **A, 
+            [in, count=len] double **B, 
             int n, 
-            int m
+            int m,
+            size_t len
         );
 
-        public double ecall_DotProduct(
-            [in, size=n] double *A, 
-            [in, size=n] double *B, 
-            int n
+        public double ecall_DotProduct_vv(
+            [in, count=len] double *A, 
+            [in, count=len] double *B, 
+            int n,
+            size_t len
         );
 
-        public double* ecall_DotProduct(
-            [in, size=n*n] double **A, 
-            [in, size=n] double *v, 
-            int n
+        public double* ecall_DotProduct_av(
+            [in, count=len1] double **A, 
+            [in, count=len2] double *v, 
+            int n,
+            size_t len1,
+            size_t len2
         );
 
         public double** ecall_CenterMatrix(
-            [in, size=n*m] double **A, 
+            [in, count=len] double **A, 
             int n, 
-            int m
+            int m,
+            size_t len
         );
 
         public double** ecall_CovarianceMatrix(
-            [in, size=n*m] double **A, 
+            [in, count=len] double **A, 
             int n, 
-            int m
+            int m,
+            size_t len
         );
 
         public Eigenpair ecall_power_method(
-            [in, size=n*n] double **A, 
-            [in, size=n] double *v, 
+            [in, count=len1] double **A, 
+            [in, count=len2] double *v, 
             int n, 
-            double tol
-        );
-
-        public void ecall_deflate(
-            [in, size=eigenpair.length*eigenpair.length] double **A, 
-            Eigenpair eigenpair
+            double tol,
+            size_t len1,
+            size_t len2
         );
 
     };

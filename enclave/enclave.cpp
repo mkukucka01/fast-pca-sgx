@@ -4,399 +4,142 @@
 #include "enclave.h"
 #include "myEigenFunctions.h"
 
-#include "sgx_tseal.h"
 
-int ecall_create_wallet(const char* master_password) {
-
+double ecall_DotProduct_aa(double **A, double **B, int n, int m,  size_t len)
+{
 	//
-	// OVERVIEW: 
-	//	1. check password policy
-	//	2. [ocall] abort if wallet already exist
-	//	3. create wallet 
-	//	4. seal wallet
-	//	5. [ocall] save wallet
-	//	6. exit enclave
+	//	This is a function that takes two matrices A and B of identical dimensions (n*m) and 
+	//  calculates and returns their dot product.
 	//
-	//
-	sgx_status_t ocall_status, sealing_status;
-	int ocall_ret;
+	double dot = 0.0;
 
-
-	// 1. check passaword policy
-	if (strlen(master_password) < 8 || strlen(master_password)+1 > MAX_ITEM_SIZE) {
-		return ERR_PASSWORD_OUT_OF_RANGE;
+	for (int i = 0; i < n; i++) {
+		for (int j = 0; j < m; j++) {
+			dot += A[i][j]*B[i][j];
+		}
 	}
 
-
-	// 2. abort if wallet already exist
-	ocall_status = ocall_is_wallet(&ocall_ret);
-	if (ocall_ret != 0) {
-		return ERR_WALLET_ALREADY_EXISTS;
-	}
-
-
-	// 3. create new wallet
-	wallet_t* wallet = (wallet_t*)malloc(sizeof(wallet_t));
-	wallet->size = 0;
-	strncpy(wallet->master_password, master_password, strlen(master_password)+1); 
-
-
-	// 4. seal wallet
-	size_t sealed_size = sizeof(sgx_sealed_data_t) + sizeof(wallet_t);
-	uint8_t* sealed_data = (uint8_t*)malloc(sealed_size);
-    sealing_status = seal_wallet(wallet, (sgx_sealed_data_t*)sealed_data, sealed_size);
-    free(wallet);
-    if (sealing_status != SGX_SUCCESS) {
-		free(sealed_data);
-		return ERR_FAIL_SEAL;
-    }
-    
-
-	// 5. save wallet
-	ocall_status = ocall_save_wallet(&ocall_ret, sealed_data, sealed_size); 
-	free(sealed_data);
-	if (ocall_ret != 0 || ocall_status != SGX_SUCCESS) {
-		return ERR_CANNOT_SAVE_WALLET;
-	}
-
-
-	// 6. exit enclave
-	return RET_SUCCESS;
+	return dot;
 }
 
-
-/**
- * @brief      Provides the wallet content. The sizes/length of 
- *             pointers need to be specified, otherwise SGX will
- *             assume a count of 1 for all pointers.
- *
- */
-int ecall_show_wallet(const char* master_password, wallet_t* wallet, size_t wallet_size) {
-
+double ecall_DotProduct_vv(double *A, double *B, int n, size_t len) 
+{
 	//
-	// OVERVIEW: 
-	//	1. [ocall] load wallet
-	// 	2. unseal wallet
-	//	3. verify master-password
-	//	4. return wallet to app
-	//	5. exit enclave
+	//	This is a function that takes two vectors A and B of identical length (n) and 
+	//  calculates and returns their dot product.
 	//
-	//
-	sgx_status_t ocall_status, sealing_status;
-	int ocall_ret;
 
+	double dot = 0.0;
 
-
-	// 1. load wallet
-	size_t sealed_size = sizeof(sgx_sealed_data_t) + sizeof(wallet_t);
-	uint8_t* sealed_data = (uint8_t*)malloc(sealed_size);
-	ocall_status = ocall_load_wallet(&ocall_ret, sealed_data, sealed_size);
-	if (ocall_ret != 0 || ocall_status != SGX_SUCCESS) {
-		free(sealed_data);
-		return ERR_CANNOT_LOAD_WALLET;
+	for (int i = 0; i < n; i++) {
+		dot += A[i]*B[i];
 	}
 
-
-	// 2. unseal loaded wallet
-	uint32_t plaintext_size = sizeof(wallet_t);
-    wallet_t* unsealed_wallet = (wallet_t*)malloc(plaintext_size);
-    sealing_status = unseal_wallet((sgx_sealed_data_t*)sealed_data, unsealed_wallet, plaintext_size);
-    free(sealed_data);
-    if (sealing_status != SGX_SUCCESS) {
-		free(unsealed_wallet);
-		return ERR_FAIL_UNSEAL;
-    }
-    
-    
-	// 3. verify master-password
-	if (strcmp(unsealed_wallet->master_password, master_password) != 0) {
-		free(unsealed_wallet);
-		return ERR_WRONG_MASTER_PASSWORD;
-	}
-
-
-	// 4. return wallet to app
-	(* wallet) = *unsealed_wallet;
-	free(unsealed_wallet);
-
-
-	// 5. exit enclave
-	return RET_SUCCESS;
+	return dot;
 }
 
-
-/**
- * @brief      Changes the wallet's master-password.
- *
- */
-int ecall_change_master_password(const char* old_password, const char* new_password) {
-
+double* ecall_DotProduct_av(double **A, double *v, int n, size_t len1, size_t len2)
+{
 	//
-	// OVERVIEW: 
-	//	1. check password policy
-	//	2. [ocall] load wallet
-	// 	3. unseal wallet
-	//	4. verify old password
-	//	5. update password
-	//	6. seal wallet
-	// 	7. [ocall] save sealed wallet
-	//	8. exit enclave
+	//  This is a function that takes a nxn-matrix A and an n-dimensional vector v stores
+	//  the product A.v at the original location of v
 	//
-	//
-	sgx_status_t ocall_status, sealing_status;
-	int ocall_ret;
 
-
-
-	// 1. check passaword policy
-	if (strlen(new_password) < 8 || strlen(new_password)+1 > MAX_ITEM_SIZE) {
-		return ERR_PASSWORD_OUT_OF_RANGE;
-	}
-
-
-	// 2. load wallet
-	size_t sealed_size = sizeof(sgx_sealed_data_t) + sizeof(wallet_t);
-	uint8_t* sealed_data = (uint8_t*)malloc(sealed_size);
-	ocall_status = ocall_load_wallet(&ocall_ret, sealed_data, sealed_size);
-	if (ocall_ret != 0 || ocall_status != SGX_SUCCESS) {
-		free(sealed_data);
-		return ERR_CANNOT_LOAD_WALLET;
-	}
-
-
-	// 3. unseal wallet
-	uint32_t plaintext_size = sizeof(wallet_t);
-    wallet_t* wallet = (wallet_t*)malloc(plaintext_size);
-    sealing_status = unseal_wallet((sgx_sealed_data_t*)sealed_data, wallet, plaintext_size);
-    free(sealed_data);
-    if (sealing_status != SGX_SUCCESS) {
-    	free(wallet);
-		return ERR_FAIL_UNSEAL;
+    double *result = (double *) malloc(sizeof(double)*n); // pointer to result vector
+  
+    for (int i = 0; i < n; i++) {
+      	result[i] = 0.0; // initialize ith element of result v
+      	for (int j = 0; j < n; j++) {
+        	result[i] += A[i][j] * v[j]; 
+      	}	
     }
 
-
-	// 4. verify master-password
-	if (strcmp(wallet->master_password, old_password) != 0) {
-		free(wallet);
-		return ERR_WRONG_MASTER_PASSWORD;
-	}
-
-
-	// 5. update password
-	strncpy(wallet->master_password, new_password, strlen(new_password)+1); 
-
-
-	// 6. seal wallet
-	sealed_data = (uint8_t*)malloc(sealed_size);
-    sealing_status = seal_wallet(wallet, (sgx_sealed_data_t*)sealed_data, sealed_size);
-    free(wallet);
-    if (sealing_status != SGX_SUCCESS) {
-    	free(wallet);
-		free(sealed_data);
-		return ERR_FAIL_SEAL;
-    }
-
-
-	// 7. save wallet
-	ocall_status = ocall_save_wallet(&ocall_ret, sealed_data, sealed_size); 
-	free(sealed_data); 
-	if (ocall_ret != 0 || ocall_status != SGX_SUCCESS) {
-		return ERR_CANNOT_SAVE_WALLET;
-	}
-
-
-	// 6. exit enclave
-	return RET_SUCCESS;
+    return result;
 }
 
-
-/**
- * @brief      Adds an item to the wallet. The sizes/length of 
- *             pointers need to be specified, otherwise SGX will
- *             assume a count of 1 for all pointers.
- *
- */
-int ecall_add_item(const char* master_password, const item_t* item, const size_t item_size) {
-
+double** ecall_CenterMatrix(double **A, int n, int m, size_t len)
+{
 	//
-	// OVERVIEW: 
-	//	1. [ocall] load wallet
-	//	2. unseal wallet
-	//	3. verify master-password
-	//	4. check input length
-	//	5. add item to the wallet
-	//	6. seal wallet
-	//	7. [ocall] save sealed wallet
-	//	8. exit enclave
+	//  This is a function that takes a nxm-matrix A and subtracts the emperical mean of each column.
+	//  The function returns the point to the centered matrix
 	//
-	//
-	sgx_status_t ocall_status, sealing_status;
-	int ocall_ret;
-
-
-
-	// 2. load wallet
-	size_t sealed_size = sizeof(sgx_sealed_data_t) + sizeof(wallet_t);
-	uint8_t* sealed_data = (uint8_t*)malloc(sealed_size);
-	ocall_status = ocall_load_wallet(&ocall_ret, sealed_data, sealed_size);
-	if (ocall_ret != 0 || ocall_status != SGX_SUCCESS) {
-		free(sealed_data);
-		return ERR_CANNOT_LOAD_WALLET;
+      
+	// initialise new vars
+    double **result =  (double **) malloc(sizeof(double*)*n);
+	double mean;
+      
+	// allocate memory
+	for (int row = 0; row < n; row++) {
+		result[row] =  (double) malloc(sizeof(double)*n);
 	}
 
-
-	// 3. unseal wallet
-	uint32_t plaintext_size = sizeof(wallet_t);
-    wallet_t* wallet = (wallet_t*)malloc(plaintext_size);
-    sealing_status = unseal_wallet((sgx_sealed_data_t*)sealed_data, wallet, plaintext_size);
-    free(sealed_data);
-    if (sealing_status != SGX_SUCCESS) {
-    	free(wallet);
-		return ERR_FAIL_UNSEAL;
-    }
-
-
-	// 3. verify master-password
-	if (strcmp(wallet->master_password, master_password) != 0) {
-		free(wallet);
-		return ERR_WRONG_MASTER_PASSWORD;
+	// loop over entire matrix
+	for (int col = 0; col < m; col++) {
+		mean = 0;
+		// get sum of column
+		for (int row = 0; row < n; row++) {
+			mean += A[row][col];
+		}
+		// calculate mean
+		mean = mean / n;
+		// subtract mean from result
+		for (int row = 0; row < n; row++) {
+			result[row][col] = A[row][col] - mean;
+		}
 	}
-
-
-	// 4. check input length
-	if (strlen(item->title)+1 > MAX_ITEM_SIZE ||
-		strlen(item->username)+1 > MAX_ITEM_SIZE ||
-		strlen(item->password)+1 > MAX_ITEM_SIZE
-	) {
-		free(wallet);
-		return ERR_ITEM_TOO_LONG; 
-    }
-
-
-	// 5. add item to the wallet
-	size_t wallet_size = wallet->size;
-	if (wallet_size >= MAX_ITEMS) {
-		free(wallet);
-		return ERR_WALLET_FULL;
-	}
-	wallet->items[wallet_size] = *item;
-	++wallet->size;
-
-
-	// 6. seal wallet
-	sealed_data = (uint8_t*)malloc(sealed_size);
-    sealing_status = seal_wallet(wallet, (sgx_sealed_data_t*)sealed_data, sealed_size);
-    free(wallet);
-    if (sealing_status != SGX_SUCCESS) {
-    	free(wallet);
-		free(sealed_data);
-		return ERR_FAIL_SEAL;
-    }
-
-
-	// 7. save wallet
-	ocall_status = ocall_save_wallet(&ocall_ret, sealed_data, sealed_size);  
-	free(sealed_data);
-	if (ocall_ret != 0 || ocall_status != SGX_SUCCESS) {
-		return ERR_CANNOT_SAVE_WALLET;
-	}
-
-
-	// 8. exit enclave
-	return RET_SUCCESS;
+	  
+    return result;
 }
 
-
-/**
- * @brief      Removes an item from the wallet. The sizes/length of 
- *             pointers need to be specified, otherwise SGX will
- *             assume a count of 1 for all pointers.
- *
- */
-int ecall_remove_item(const char* master_password, const int index) {
-
+double** ecall_CovarianceMatrix(double **A, int n, int m, size_t len)
+{
 	//
-	// OVERVIEW: 
-	//	1. check index bounds
-	//	2. [ocall] load wallet
-	//	3. unseal wallet
-	//	4. verify master-password
-	//	5. remove item from the wallet
-	//	6. seal wallet
-	//	7. [ocall] save sealed wallet
-	//	8. exit enclave
+	//  This is a function that takes a nxm-matrix A and computes its mxm covariance matrix.
 	//
-	//
-	sgx_status_t ocall_status, sealing_status;
-	int ocall_ret;
+      
+    double **cov =  (double *) malloc(sizeof(double*)*m);
+    double **cA = ecall_CenterMatrix(A, n, m);
+      
+	for(int i = 0; i < m; i++)
+	cov[i] =  (double) malloc(sizeof(double)*n);
 
-
-
-	// 1. check index bounds
-	if (index < 0 || index >= MAX_ITEMS) {
-		return ERR_ITEM_DOES_NOT_EXIST;
+	// loop over covariance matrix
+	for (int row = 0; row < m; row++) {
+		for (int col = 0; col < m; col++) {
+			// initialise matrix entry
+			cov[row][col] = 0;
+			for (int i = 0; i < n; i++) {
+				// calculate the entry from multiplying cA with its transpose
+				cov[row][col] += cA[i][row] * cA[i][col];
+			}
+			cov[row][col] /= n - 1.0; // divide by n-1
+		}
 	}
-
-
-	// 2. load wallet
-	size_t sealed_size = sizeof(sgx_sealed_data_t) + sizeof(wallet_t);
-	uint8_t* sealed_data = (uint8_t*)malloc(sealed_size);
-	ocall_status = ocall_load_wallet(&ocall_ret, sealed_data, sealed_size);
-	if (ocall_ret != 0 || ocall_status != SGX_SUCCESS) {
-		free(sealed_data);
-		return ERR_CANNOT_LOAD_WALLET;
-	}
-
-
-	// 3. unseal wallet
-	uint32_t plaintext_size = sizeof(wallet_t);
-    wallet_t* wallet = (wallet_t*)malloc(plaintext_size);
-    sealing_status = unseal_wallet((sgx_sealed_data_t*)sealed_data, wallet, plaintext_size);
-    free(sealed_data);
-    if (sealing_status != SGX_SUCCESS) {
-    	free(wallet);
-		return ERR_FAIL_UNSEAL;
-    }
-
-
-	// 4. verify master-password
-	if (strcmp(wallet->master_password, master_password) != 0) {
-		free(wallet);
-		return ERR_WRONG_MASTER_PASSWORD;
-	}
-
-
-	// 5. remove item from the wallet
-	size_t wallet_size = wallet->size;
-	if (index >= wallet_size) {
-		free(wallet);
-		return ERR_ITEM_DOES_NOT_EXIST;
-	}
-	for (int i = index; i < wallet_size-1; ++i) {
-		wallet->items[i] = wallet->items[i+1];
-	}
-	--wallet->size;
-
-
-	// 6. seal wallet
-	sealed_data = (uint8_t*)malloc(sealed_size);
-    sealing_status = seal_wallet(wallet, (sgx_sealed_data_t*)sealed_data, sealed_size);
-    free(wallet);
-    if (sealing_status != SGX_SUCCESS) {
-		free(sealed_data);
-		return ERR_FAIL_SEAL;
-    }
-
-
-	// 7. save wallet
-	ocall_status = ocall_save_wallet(&ocall_ret, sealed_data, sealed_size);  
-	free(sealed_data);
-	if (ocall_ret != 0 || ocall_status != SGX_SUCCESS) {
-		return ERR_CANNOT_SAVE_WALLET;
-	}
-
-
-	// 8. exit enclave
-	return RET_SUCCESS;
+      
+    return cov;
 }
 
+Eigenpair ecall_power_method(double **A, double *v, int n, double tol, size_t len1, size_t len2)
+{
+    //
+    // This function computes the largest eigenvalue and the corresponding eigenvector
+    //
+    // v: initial eigenvector iterate
+
+    Eigenpair eigenpair(n);
+    double lambda;
+
+    for (int i = 0; i < n; i++) {
+	    eigenpair.vector[i] = v[i];
+    }
+	eigenpair.normalize();
+
+    do {
+	    lambda = eigenpair.value;
+	    eigenpair.vector = ecall_DotProduct_av(A, eigenpair.vector, eigenpair.length);
+	    eigenpair.normalize();
+	  
+  	} while (abs(eigenpair.value - lambda)/abs(eigenpair.value) > tol);
+  
+  	return eigenpair;
+}

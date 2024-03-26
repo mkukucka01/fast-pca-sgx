@@ -10,29 +10,106 @@
 
 using namespace std;
 
+#define PI 3.14159265358979323846
+#define TOL 1E-6
 
-// OCALLs implementation
-int ocall_save_wallet(const uint8_t* sealed_data, const size_t sealed_size) {
-    ofstream file(WALLET_FILE, ios::out | ios::binary);
-    if (file.fail()) {return 1;}
-    file.write((const char*) sealed_data, sealed_size);
-    file.close();
-    return 0;
+bool AE(double a, double b) {
+	return (abs(a - b) < TOL); // Compare two values with respect to tolerance
 }
 
-int ocall_load_wallet(uint8_t* sealed_data, const size_t sealed_size) {
-    ifstream file(WALLET_FILE, ios::in | ios::binary);
-    if (file.fail()) {return 1;}
-    file.read((char*) sealed_data, sealed_size);
-    file.close();
-    return 0;
+// main function implementations
+void deflate(double **A, Eigenpair eigenpair)
+{
+    //
+    // This procedure removes eigenpair.vector from transformation matrix A in place
+    //
+
+    // store the eigenvalue before normalising
+	double lambda = eigenpair.value;
+	double deflator;
+	eigenpair.normalize();
+
+	for (int i = 0; i < eigenpair.length; i++) {
+		for (int j = 0; j < eigenpair.length; j++) {
+			// calculate value to deflate each entry in the original matrix by
+			deflator = lambda * eigenpair.vector[i] * eigenpair.vector[j];
+			A[i][j] = A[i][j] - deflator;
+		}
+	}
 }
 
-int ocall_is_wallet(void) {
-    ifstream file(WALLET_FILE, ios::in | ios::binary);
-    if (file.fail()) {return 0;} // failure means no wallet found
-    file.close();
-    return 1;
+double** ReadData(string inputFileName, int n, int m)
+{
+	//
+	//  This is a function that returns a pointer to a 56x286 matrix, which contains the reflectance spectra.
+	//  The first 29 rows contain spectra from Arabica samples, the following 27 rows contain spectra from Robusta samples.
+	// The code for parsing the CSV file has been adapted from Bernardo Trindade
+	// https://waterprogramming.wordpress.com/2017/08/20/reading-csv-files-in-c
+
+    double **spectra = new double* [n];
+     
+    for (int sample = 0; sample < n; sample++) {
+	    spectra[sample] = new double [m];
+    }
+
+    vector<vector<double>> data;
+    cout << inputFileName << endl;
+    ifstream inputFile(inputFileName);
+    int l = 0;
+      
+    while (inputFile) {
+        string s;
+        if (!getline(inputFile, s)) break;
+		// cout << s << endl;
+        if (l!=0) { // ignore first line, which contains wavelengths
+            istringstream ss(s);
+            vector<double> record;
+
+	    	int column = 0;
+            while (ss) {
+	      		// cout << "Row " << l << " " << ss << endl;
+                string line;
+                if (!getline(ss, line, ','))
+                    break;
+                try {
+		  		// cout << "Row " << l << " Column " << column << " line " << line << endl; 
+                    spectra[l-1][column] = stod(line);
+		    		column++;
+                }
+                catch (const std::invalid_argument e) {
+                    cout << "NaN found in file " << inputFileName << " line " << l
+                         << endl;
+                    e.what();
+                }
+			}
+        }
+		l++;
+    }
+
+    return spectra;
+}
+
+void print_matrix(double **A, int n, int m)
+{
+	//
+	// This procedure prints an nxm matrix.
+	//
+  	for (int i=0; i < n; i++) {
+    	for (int j=0; j < m; j++) {
+      		std::cout << A[i][j] << '\t';
+		}
+    	std::cout << '\n';
+    }
+}
+
+void print_matrix(double* v, int n)
+{
+	//
+	// This procedure prints an nx1 vector.
+	//
+	for (int i = 0; i < n; i++) {
+		std::cout << v[i] << '\t';
+	}
 }
 
 int main(int argc, char** argv) {
@@ -43,181 +120,220 @@ int main(int argc, char** argv) {
     sgx_status_t ecall_status, enclave_status;
 
     enclave_status = sgx_create_enclave(ENCLAVE_FILE, SGX_DEBUG_FLAG, &token, &updated, &eid, NULL);
-    if(enclave_status != SGX_SUCCESS) {
+    if (enclave_status != SGX_SUCCESS) {
         error_print("Fail to initialize enclave."); 
         return -1;
     }
     info_print("Enclave successfully initilised.");
 
-    const char* options = "hvn:p:c:sax:y:z:r:";
-    opterr=0; // prevent 'getopt' from printing err messages
-    char err_message[100];
-    int opt, stop=0;
-    int h_flag=0, v_flag=0, s_flag=0, a_flag=0;
-    char * n_value=NULL, *p_value=NULL, *c_value=NULL, *x_value=NULL, *y_value=NULL, *z_value=NULL, *r_value=NULL;
-  
-    // read user input
-    while ((opt = getopt(argc, argv, options)) != -1) {
-        switch (opt) {
-            // help
-            case 'h':
-                h_flag = 1;
-                break;
+    // ----------------------------------------------------------------------------------------------
+	//
+	// PART 1: Initialisation
+	//
+	// ----------------------------------------------------------------------------------------------
 
-            // create new wallet
-            case 'n':
-                n_value = optarg;
-                break;
+	// Defining local variables to be used:
 
-            // master-password
-            case 'p':
-                p_value = optarg;
-                break;
+	int n = 2, nc = 3;
+	double* v, * result = NULL;
 
-            // change master-password
-            case 'c':
-                c_value = optarg;
-                break;
+	double** A = NULL;
+	double** C = NULL;
+	// Allocating memory for the 1D arrays - these are the number of masses, n, long:
+	v = new double[n];
 
-            // show wallet
-            case 's':
-                s_flag = 1;
-                break;
+	// struct comprising eigenvalue, eigenvector pair
+	Eigenpair eigenpair(2), expected_eigenpair(2), deflate_eigenpair(3);
 
-            // add item
-            case 'a': // add item flag
-                a_flag = 1;
-                break;
-            case 'x': // item's title
-                x_value = optarg;
-                break;
-            case 'y': // item's username
-                y_value = optarg;
-                break;
-            case 'z': // item's password
-                z_value = optarg;
-                break;
+	// Allocating memory for the 2D arrays - these have dimensions of n*n:
+	A = new double* [n];
+	C = new double* [nc];
+	for (int i = 0; i < n; i++) {
+		A[i] = new double[n];
+	}
+	for (int i = 0; i < nc; i++) {
+		C[i] = new double[nc];
+	}
 
-            // remove item
-            case 'r':
-                r_value = optarg;
-                break;
+	if (eigenpair.value == 0.0) {
+		cout << "OK: Initialization of eigenpair with eigenvalue 0.\n";
+	}
+	else {
+		cout << "ERROR: Initialization of eigenpair with eigenvalue 0.\n";
+	}
 
-            // exceptions
-            case '?':
-                if (optopt == 'n' || optopt == 'p' || optopt == 'c' || optopt == 'r' ||
-                    optopt == 'x' || optopt == 'y' || optopt == 'z'
-                ) {
-                    sprintf(err_message, "Option -%c requires an argument.", optopt);
-                }
-                else if (isprint(optopt)) {
-                    sprintf(err_message, "Unknown option `-%c'.", optopt);
-                }
-                else {
-                    sprintf(err_message, "Unknown option character `\\x%x'.",optopt);
-                }
-                stop = 1;
-                error_print(err_message);
-                error_print("Program exiting.");
-                break;
+	eigenpair.vector[0] = 2.0;
+	eigenpair.vector[1] = 0.0;
+	eigenpair.normalize();
+	if (eigenpair.value == 2.0 &&
+		eigenpair.vector[0] == 1.0 &&
+		eigenpair.vector[1] == 0.0) {
+		cout << "OK: Normation of eigenpair.\n";
+	}
+	else {
+		cout << "ERROR: Normation of eigenpair. ";
+	}
 
-            default:
-                error_print("Unknown option.");
-        }
-    }
+	A[0][0] = 4.0;
+	A[0][1] = 6.0;
+	A[1][0] = 1.0;
+	A[1][1] = 3.0;
 
-    // perform actions
-    if (stop != 1) {
-        // show help
-        if (h_flag) {
-            show_help();
-        }
+	v[0] = 3.0;
+	v[1] = 1.0;
 
-        // create new wallet
-        else if(n_value!=NULL) {
-            ecall_status = ecall_create_wallet(eid, &ret, n_value);
-            if (ecall_status != SGX_SUCCESS || is_error(ret)) {
-                error_print("Fail to create new wallet.");
-            }
-            else {
-                info_print("Wallet successfully created.");
-            }
-        }
+	result = ecall_DotProduct_av(A, v, 2, 2*2, 2);
+	if (result[0] == 18.0 && result[1] == 6.0) {
+		cout << "OK: DotProduct of Matrix and Vector\n";
+	}
+	else {
+		cout << "ERROR: DotProduct of Matrix and Vector\n";
+	}
 
-        // change master-password
-        else if (p_value!=NULL && c_value!=NULL) {
-            ecall_status = ecall_change_master_password(eid, &ret, p_value, c_value);
-            if (ecall_status != SGX_SUCCESS || is_error(ret)) {
-                error_print("Fail change master-password.");
-            }
-            else {
-                info_print("Master-password successfully changed.");
-            }
-        }
+	v[0] = 1.0;
+	v[1] = 1.0;
+	eigenpair = ecall_power_method(A, v, 2, TOL, 2*2, 2);
 
-        // show wallet
-        else if(p_value!=NULL && s_flag) {
-            wallet_t* wallet = (wallet_t*)malloc(sizeof(wallet_t));
-            ecall_status = ecall_show_wallet(eid, &ret, p_value, wallet, sizeof(wallet_t));
-            if (ecall_status != SGX_SUCCESS || is_error(ret)) {
-                error_print("Fail to retrieve wallet.");
-            }
-            else {
-                info_print("Wallet successfully retrieved.");
-                print_wallet(wallet);
-            }
-            free(wallet);
-        }
+	if (abs(eigenpair.value - 6.0) / 6.0 < TOL) {
+		cout << "OK: Power Method computing largest eigenvalue\n";
+	}
+	else {
+		cout << "ERROR: Power Method computing largest eigenvalue\n";
+	}
 
-        // add item
-        else if (p_value!=NULL && a_flag && x_value!=NULL && y_value!=NULL && z_value!=NULL) {
-            item_t* new_item = (item_t*)malloc(sizeof(item_t));
-            strcpy(new_item->title, x_value); 
-            strcpy(new_item->username, y_value); 
-            strcpy(new_item->password, z_value);
-            ecall_status = ecall_add_item(eid, &ret, p_value, new_item, sizeof(item_t));
-            if (ecall_status != SGX_SUCCESS || is_error(ret)) {
-                error_print("Fail to add new item to wallet.");
-            }
-            else {
-                info_print("Item successfully added to the wallet.");
-            }
-            free(new_item);
-        }
+	if (abs(eigenpair.vector[0] - 0.94868417) / 0.94868417 < sqrt(TOL) &&
+		abs(eigenpair.vector[1] - 0.31622515) / 0.31622515 < sqrt(TOL)) {
+		cout << "OK: Power Method computing eigenvector of largest eigenvalue\n";
+	}
+	else {
+		cout << "ERROR: Power Method computing eigenvector of largest eigenvalue\n";
+		cout << "(" << eigenpair.vector[0] << "," << eigenpair.vector[1] << ")\n";
+	}
 
-        // remove item
-        else if (p_value!=NULL && r_value!=NULL) {
-            char* p_end;
-            int index = (int)strtol(r_value, &p_end, 10);
-            if (r_value == p_end) {
-                error_print("Option -r requires an integer argument.");
-            }
-            else {
-                ecall_status = ecall_remove_item(eid, &ret, p_value, index);
-                if (ecall_status != SGX_SUCCESS || is_error(ret)) {
-                    error_print("Fail to remove item.");
-                }
-                else {
-                    info_print("Item successfully removed from the wallet.");
-                }
-            }
-        }
 
-        // display help
-        else {
-            error_print("Wrong inputs.");
-            show_help();
-        }
-    }
+	ifstream infile;
+
+	infile.open("C.txt");
+	for (int i = 0; i < nc; i++) {
+		for (int j = 0; j < nc; j++) {
+			infile >> C[i][j];
+		}
+	}
+	cout << "Test matrix" << endl;
+	print_matrix(C, 3, 3);
+
+	double** cov = ecall_CovarianceMatrix(C, 3, 3, 3*3);
+	//  cout << "CovarianceMatrix" << endl;
+	// print_matrix(cov, 3, 3);
+	if (AE(cov[0][0], 1.0) && AE(cov[0][1], 0.5) && AE(cov[0][2], -1.0) &&
+		AE(cov[1][0], 0.5) && AE(cov[1][1], 1.0) && AE(cov[1][2], -1.0) &&
+		AE(cov[2][0], -1.0) && AE(cov[2][1], -1.0) && AE(cov[2][2], 4.0 / 3)
+		) {
+		cout << "OK: covariance matrix computed correctly\n";
+	}
+	else {
+		cout << "ERROR: in computation of covariance matrix\n";
+		print_matrix(C, deflate_eigenpair.length, deflate_eigenpair.length);
+	}
+
+
+	deflate_eigenpair.value = 3.0;
+	deflate_eigenpair.vector[0] = 1.0;
+	deflate_eigenpair.vector[1] = 1.0;
+	deflate_eigenpair.vector[2] = 0.0;
+
+	deflate(C, deflate_eigenpair);
+	if (AE(C[0][0], -0.5) && AE(C[0][1], 0.5) && AE(C[0][2], 0.0) &&
+		AE(C[1][0], 0.5) && AE(C[1][1], -0.5) && AE(C[1][2], 0.0) &&
+		AE(C[2][0], 0.0) && AE(C[2][1], 0.0) && AE(C[2][2], 2.0)
+		) {
+		cout << "OK: deflate method computes deflated matrix correctly\n";
+	}
+	else {
+		cout << "ERROR: deflate method does not compute deflated matrix correctly\n";
+		print_matrix(C, deflate_eigenpair.length, deflate_eigenpair.length);
+	}
+
+	// Test reading of CSV file
+	double** spectra;
+
+	const int N = 56;   // rows
+	const int M = 286;  // columns
+
+	spectra = ReadData("DS19hH2_dk0_FTIR_Spectra_instant_coffee.csv", N, M);
+	if (AE(spectra[0][0], 21.227620) && AE(spectra[N - 1][M - 1], 1.574679)) {
+		cout << "OK: Reading of CSV file" << endl;
+	}
+	else {
+		cout << "ERROR: reading of CSV file" << spectra[0][0] << " " << spectra[N - 1][M - 1] << endl;
+	}
+
+	//print_matrix(spectra, N, M);
+	cov = ecall_CovarianceMatrix(spectra, N, M, N*M);
+
+	// ----------------------------------------------------------------------------------------------
+	// PART 2: Compute principal Components
+	// ----------------------------------------------------------------------------------------------
+	// Eigenvectors will be of length M
+
+	const int n_pc = 56; // Number of principal components to compute
+	double** Eigenvectors = NULL;        // 2D array where the principal components will be stored, row for each PC
+	double* Eigenvalues = new double[n_pc]; // 1D array where the eigenvalues will be stored, col for each PC
+	Eigenpair dominant(M);     // Eigenpair that stores the most recently computed eigenpair
+	double* v_init = new double[M]; // pointer to initial eigenvector estimate
+
+	// memory allocation
+	Eigenvectors = new double* [n_pc];
+	for (int i = 0; i < N; i++) {
+		Eigenvectors[i] = new double[M];
+	}
+
+	// construct initial eigenvector guess
+	v_init[0] = 1.0;
+	for (int i = 1; i < M; i++) {
+		v_init[i] = 1;
+	}
+
+	// Compute first n_pc principal components
+	for (int i = 0; i < n_pc; i++) {
+		dominant = ecall_power_method(cov, v_init, M, TOL, M*M, M); // compute dominant eigenpair (power method)
+		// store principal component
+		Eigenvectors[i] = dominant.vector;
+		Eigenvalues[i] = dominant.value;
+
+		// deflate matrix with dominant eigenpair
+		deflate(cov, dominant);
+	}
+
+	// ----------------------------------------------------------------------------------------------
+	// PART 3: Exporting Data 
+	// ----------------------------------------------------------------------------------------------
+	
+	std::ofstream output_vectors("coffeeAI_principal_components.csv");
+
+	for (int i = 0; i < n_pc; i++) {
+		for (int j = 0; j < M; j++) {
+			// each row corresponds to a principal component
+			output_vectors << Eigenvectors[i][j] << ",";
+		}
+		output_vectors << "\n";
+	}
+	output_vectors.close();
+
+	std::ofstream output_values("coffeeAI_eigenvalues.csv");
+	for (int i = 0; i < n_pc; i++) {
+		// each row corresponds to a principal component
+		output_values << Eigenvalues[i] << "\n";
+	}
+	output_values.close();
     
     // destroy enclave
     enclave_status = sgx_destroy_enclave(eid);
-    if(enclave_status != SGX_SUCCESS) {
+    if (enclave_status != SGX_SUCCESS) {
         error_print("Fail to destroy enclave."); 
         return -1;
     }
     info_print("Enclave successfully destroyed.");
-
     info_print("Program exit success.");
     return 0;
 }
