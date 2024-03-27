@@ -3,7 +3,6 @@
 
 #include <math.h>
 #include <string.h>
-#include <vector>
 #include <sstream> //istringstream
 #include <iostream> // cout
 #include <fstream> // ifstream
@@ -27,7 +26,7 @@ struct Eigenpair {
   }
   // Constructor
   // Attribute value is set to 0.0 and attribute vector to an array of doubles with length n
-  Eigenpair(const int n) : value(0.0), length(n), vector(new double[n]) {} //Constructor
+  Eigenpair(const int n) : value(0.0), length(n), vector((double *) malloc(sizeof(double)*n)) {} //Constructor
 };
 
 #endif // MYEIGENFUNCTIONS_H_

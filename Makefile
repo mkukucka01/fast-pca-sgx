@@ -73,7 +73,7 @@ else
 	Urts_Library_Name := sgx_urts
 endif
 
-App_Cpp_Files := app/app.cpp app/utils.cpp
+App_Cpp_Files := app/app.cpp app/utils.cpp $(wildcard App/Edger8rSyntax/*.cpp) $(wildcard App/TrustedLibrary/*.cpp)
 App_Include_Paths := -Iapp -I$(SGX_SDK)/include -Iinclude -Itest
 
 App_C_Flags := $(SGX_COMMON_CFLAGS) -fPIC -Wno-attributes $(App_Include_Paths)
@@ -114,7 +114,7 @@ else
 endif
 Crypto_Library_Name := sgx_tcrypto
 
-Enclave_Cpp_Files := enclave/enclave.cpp enclave/sealing/sealing.cpp
+Enclave_Cpp_Files := enclave/enclave.cpp $(wildcard Enclave/Edger8rSyntax/*.cpp) $(wildcard Enclave/TrustedLibrary/*.cpp)
 Enclave_Include_Paths := -Ienclave -Iinclude -I$(SGX_SDK)/include -I$(SGX_SDK)/include/tlibc -I$(SGX_SDK)/include/stlport
 
 Enclave_C_Flags := $(SGX_COMMON_CFLAGS) -nostdinc -fvisibility=hidden -fpie -fstack-protector $(Enclave_Include_Paths)

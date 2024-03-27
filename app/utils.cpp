@@ -3,7 +3,6 @@
 
 #include "utils.h"
 #include "app.h"
-#include "wallet.h"
 #include "enclave.h"
 
 void info_print(const char* str) {
