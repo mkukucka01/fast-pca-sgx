@@ -8,8 +8,6 @@
 #include <iostream> // cout
 #include <fstream> // ifstream
 
-using namespace std;
-
 struct Eigenpair {
   double value; //Eigenvalue
   double *vector; //Eigenvector

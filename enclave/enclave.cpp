@@ -1,5 +1,10 @@
 #include "enclave_t.h"
 #include "string.h"
+#include <math.h>
+#include <vector>
+#include <sstream> //istringstream
+#include <iostream> // cout
+#include <fstream> // ifstream
 
 #include "enclave.h"
 #include "myEigenFunctions.h"

@@ -182,7 +182,10 @@ int main(int argc, char** argv) {
 	v[0] = 3.0;
 	v[1] = 1.0;
 
-	result = ecall_DotProduct_av(A, v, 2, 2*2, 2);
+	ecall_status = ecall_DotProduct_av(eid, &result, A, v, 2, 2*2, 2);
+	if (ecall_status != SGX_SUCCESS)) {
+		error_print("Failed calculation");
+	}
 	if (result[0] == 18.0 && result[1] == 6.0) {
 		cout << "OK: DotProduct of Matrix and Vector\n";
 	}
@@ -192,8 +195,10 @@ int main(int argc, char** argv) {
 
 	v[0] = 1.0;
 	v[1] = 1.0;
-	eigenpair = ecall_power_method(A, v, 2, TOL, 2*2, 2);
-
+	ecall_status = ecall_power_method(eid, &eignepair, A, v, 2, TOL, 2*2, 2);
+	if (ecall_status != SGX_SUCCESS)) {
+		error_print("Failed calculation");
+	}
 	if (abs(eigenpair.value - 6.0) / 6.0 < TOL) {
 		cout << "OK: Power Method computing largest eigenvalue\n";
 	}
@@ -222,7 +227,11 @@ int main(int argc, char** argv) {
 	cout << "Test matrix" << endl;
 	print_matrix(C, 3, 3);
 
-	double** cov = ecall_CovarianceMatrix(C, 3, 3, 3*3);
+	double** cov;
+	ecall_status = ecall_CovarianceMatrix(eid, &cov, 3, 3, 3*3);
+	if (ecall_status != SGX_SUCCESS)) {
+		error_print("Failed calculation");
+	}
 	//  cout << "CovarianceMatrix" << endl;
 	// print_matrix(cov, 3, 3);
 	if (AE(cov[0][0], 1.0) && AE(cov[0][1], 0.5) && AE(cov[0][2], -1.0) &&
@@ -269,7 +278,10 @@ int main(int argc, char** argv) {
 	}
 
 	//print_matrix(spectra, N, M);
-	cov = ecall_CovarianceMatrix(spectra, N, M, N*M);
+	ecall_status = ecall_CovarianceMatrix(eid, &cov, spectra, N, M, N*M);
+	if (ecall_status != SGX_SUCCESS)) {
+		error_print("Failed calculation");
+	}
 
 	// ----------------------------------------------------------------------------------------------
 	// PART 2: Compute principal Components
@@ -296,7 +308,10 @@ int main(int argc, char** argv) {
 
 	// Compute first n_pc principal components
 	for (int i = 0; i < n_pc; i++) {
-		dominant = ecall_power_method(cov, v_init, M, TOL, M*M, M); // compute dominant eigenpair (power method)
+		ecall_status = ecall_power_method(eid, &dominant, cov, v_init, M, TOL, M*M, M); // compute dominant eigenpair (power method)
+		if (ecall_status != SGX_SUCCESS)) {
+		error_print("Failed calculation");
+	}
 		// store principal component
 		Eigenvectors[i] = dominant.vector;
 		Eigenvalues[i] = dominant.value;
