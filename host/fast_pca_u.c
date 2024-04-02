@@ -65,7 +65,7 @@ typedef struct _enclave_DotProduct_av_args_t
     oe_result_t oe_result;
     uint8_t* deepcopy_out_buffer;
     size_t deepcopy_out_buffer_size;
-    double* oe_retval;
+    double* result;
     double** A;
     double* v;
     int n;
@@ -349,7 +349,7 @@ OE_WEAK_ALIAS(fast_pca_enclave_DotProduct_vv, enclave_DotProduct_vv);
 
 oe_result_t fast_pca_enclave_DotProduct_av(
     oe_enclave_t* enclave,
-    double** _retval,
+    double* result,
     double** A,
     double* v,
     int n,
@@ -375,6 +375,7 @@ oe_result_t fast_pca_enclave_DotProduct_av(
 
     /* Fill marshalling struct. */
     memset(&_args, 0, sizeof(_args));
+    _args.result = (double*)result;
     _args.A = (double**)A;
     _args.v = (double*)v;
     _args.n = n;
@@ -390,7 +391,8 @@ oe_result_t fast_pca_enclave_DotProduct_av(
     
     /* Compute output buffer size. Include out and in-out parameters. */
     OE_ADD_SIZE(_output_buffer_size, sizeof(enclave_DotProduct_av_args_t));
-    /* There were no corresponding parameters. */
+    if (result)
+        OE_ADD_ARG_SIZE(_output_buffer_size, _args.len2, sizeof(double));
     
     /* Allocate marshalling buffer. */
     _total_buffer_size = _input_buffer_size;
@@ -443,9 +445,9 @@ oe_result_t fast_pca_enclave_DotProduct_av(
         goto done;
 
     /* Unmarshal return value and out, in-out parameters. */
-    *_retval = _pargs_out->oe_retval;
+    /* No return value. */
 
-    /* There were no out nor in-out parameters. */
+    OE_READ_OUT_PARAM(result, _args.len2, sizeof(double));
 
     _result = OE_OK;
 

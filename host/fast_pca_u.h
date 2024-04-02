@@ -38,7 +38,7 @@ oe_result_t enclave_DotProduct_vv(
 
 oe_result_t enclave_DotProduct_av(
     oe_enclave_t* enclave,
-    double** _retval,
+    double* result,
     double** A,
     double* v,
     int n,

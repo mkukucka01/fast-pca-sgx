@@ -55,7 +55,7 @@ typedef struct _enclave_DotProduct_av_args_t
     oe_result_t oe_result;
     uint8_t* deepcopy_out_buffer;
     size_t deepcopy_out_buffer_size;
-    double* oe_retval;
+    double* result;
     double** A;
     double* v;
     int n;
@@ -287,7 +287,8 @@ static void ecall_enclave_DotProduct_av(
 
     /* Set out and in-out pointers. */
     /* In-out parameters are copied to output buffer. */
-    /* There were no out nor in-out parameters. */
+    if (_pargs_in->result)
+        OE_SET_OUT_POINTER(result, _pargs_in->len2, sizeof(double), double*);
 
     /* Check that in/in-out strings are null terminated. */
     /* There were no in nor in-out string parameters. */
@@ -296,7 +297,8 @@ static void ecall_enclave_DotProduct_av(
     oe_lfence();
 
     /* Call user function. */
-    _pargs_out->oe_retval = enclave_DotProduct_av(
+    enclave_DotProduct_av(
+        _pargs_in->result,
         _pargs_in->A,
         _pargs_in->v,
         _pargs_in->n,

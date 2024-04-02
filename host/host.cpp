@@ -107,7 +107,7 @@ int main(int argc, const char* argv[]) {
 		eigenpair.vector[1] == 0.0)
 		cout << "OK: Normalization of eigenpair.\n";
 	else
-		cout << "ERROR: Normation of eigenpair. ";
+		cout << "ERROR: Normalization of eigenpair. ";
 
 	A[0][0] = 4.0;
 	A[0][1] = 6.0;
@@ -117,12 +117,13 @@ int main(int argc, const char* argv[]) {
 	v[0] = 3.0;
 	v[1] = 1.0;
 	
-	double** dot_product_rst;
+	double* dot_product_rst = new double[2];
 	result = enclave_DotProduct_av(enclave, dot_product_rst, A, v, 2, 2*2, 2);
-	if (*dot_product_rst[0] == 18.0 && *dot_product_rst[1] == 6.0)
+	if (dot_product_rst[0] == 18.0 && dot_product_rst[1] == 6.0)
 		cout << "OK: DotProduct of Matrix and Vector\n";
 	else
 		cout << "ERROR: DotProduct of Matrix and Vector\n";
+		cout << dot_product_rst[0] << endl;
 
 	v[0] = 1.0;
 	v[1] = 1.0;
@@ -150,6 +151,7 @@ int main(int argc, const char* argv[]) {
 			infile >> C[i][j];
 	cout << "Test matrix" << endl;
 	print_matrix(C, 3, 3);
+	infile.close();
 
 	double** cov = CovarianceMatrix(C, 3, 3);
 	//  cout << "CovarianceMatrix" << endl;
@@ -244,16 +246,17 @@ int main(int argc, const char* argv[]) {
 	output_vectors.close();
 
 	std::ofstream output_values("coffeeAI_eigenvalues.csv");
+
+	cout <<"WE MADE IT" << endl;
 	for (int i = 0; i < n_pc; i++) {
 		// each row corresponds to a principal component
 		output_values << Eigenvalues[i] << "\n";
 	}
 	output_values.close();
 
-
 	// Clean up the enclave if we created one
 	if (enclave)
 		oe_terminate_enclave(enclave);
 
-	return ret;
+	return 0;
 } // end main

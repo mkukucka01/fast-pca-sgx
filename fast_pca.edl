@@ -30,7 +30,8 @@ enclave {
             size_t len
         );
 
-        public double* enclave_DotProduct_av(
+        public void enclave_DotProduct_av(
+            [out, count=len2] double *result,
             [in, count=len1] double **A, 
             [in, count=len2] double *v, 
             int n,

@@ -26,7 +26,8 @@ double enclave_DotProduct_vv(
     int n,
     size_t len);
 
-double* enclave_DotProduct_av(
+void enclave_DotProduct_av(
+    double* result,
     double** A,
     double* v,
     int n,

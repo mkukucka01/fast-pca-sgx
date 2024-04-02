@@ -42,22 +42,19 @@ double enclave_DotProduct_vv(double *A, double *B, int n, size_t len)
 	return dot;
 }
 
-double* enclave_DotProduct_av(double **A, double *v, int n, size_t len1, size_t len2)
+void enclave_DotProduct_av(double* result, double **A, double *v, int n, size_t len1, size_t len2)
 {
 	//
 	//  This is a function that takes a nxn-matrix A and an n-dimensional vector v stores
 	//  the product A.v at the original location of v
 	//
-
-    double *result = (double *) malloc(sizeof(double)*n); // pointer to result vector
-  
     for (int i = 0; i < n; i++) {
       	result[i] = 0.0; // initialize ith element of result v
       	for (int j = 0; j < n; j++) {
-        	result[i] += A[i][j] * v[j]; 
+        	result[i] += A[i][j] * v[j];
       	}	
     }
-    return result;
+	// fprintf(stdout, "result: %f\n", *result);
 }
 
 // double** ecall_CenterMatrix(double **A, int n, int m, size_t len)

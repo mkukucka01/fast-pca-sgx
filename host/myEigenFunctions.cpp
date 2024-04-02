@@ -104,7 +104,7 @@ Eigenpair power_method(oe_enclave_t* enclave, oe_result_t* result, double **A, d
 	eigenpair.normalize(enclave, result);
     do {
 	    lambda = eigenpair.value;
-	    *result = enclave_DotProduct_av(enclave, &eigenpair.vector, A, eigenpair.vector, eigenpair.length, eigenpair.length*eigenpair.length, eigenpair.length);
+	    *result = enclave_DotProduct_av(enclave, eigenpair.vector, A, eigenpair.vector, eigenpair.length, eigenpair.length*eigenpair.length, eigenpair.length);
 	    eigenpair.normalize(enclave, result);
 	  
   } while (abs(eigenpair.value - lambda)/abs(eigenpair.value) > tol);
