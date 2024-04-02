@@ -1,0 +1,65 @@
+enclave {
+
+    // includes
+    // include "myEigenFunctions.h"
+
+    /* Import ECALL/OCALL from sub-directory EDLs.
+     *  [from]: specifies the location of EDL file. 
+     *  [import]: specifies the functions to import, 
+     *  [*]: implies to import all functions.
+     */
+
+     from "openenclave/edl/syscall.edl" import *;
+     from "platform.edl" import *;
+
+
+    // define ECALLs
+    trusted {
+        public double enclave_DotProduct_aa(
+            [in, count=len] double **A, 
+            [in, count=len] double **B, 
+            int n, 
+            int m,
+            size_t len
+        );
+
+        public double enclave_DotProduct_vv(
+            [in, count=len] double *A, 
+            [in, count=len] double *B, 
+            int n,
+            size_t len
+        );
+
+        public double* enclave_DotProduct_av(
+            [in, count=len1] double **A, 
+            [in, count=len2] double *v, 
+            int n,
+            size_t len1,
+            size_t len2
+        );
+
+        // public double** enclave_CenterMatrix(
+        //     [in, count=len] double **A, 
+        //     int n, 
+        //     int m,
+        //     size_t len
+        // );
+
+        // public double** enclave_CovarianceMatrix(
+        //     [in, count=len] double **A, 
+        //     int n, 
+        //     int m,
+        //     size_t len
+        // );
+
+        // public Eigenpair enclave_power_method(
+        //     [in, count=len1] double **A, 
+        //     [in, count=len2] double *v, 
+        //     int n, 
+        //     double tol,
+        //     size_t len1,
+        //     size_t len2
+        // );
+
+    };
+};
