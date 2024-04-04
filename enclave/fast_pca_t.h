@@ -34,6 +34,13 @@ void enclave_DotProduct_av(
     size_t len1,
     size_t len2);
 
+void enclave_CenterMatrix(
+    double** result,
+    double** A,
+    int n,
+    int m,
+    size_t len);
+
 oe_result_t oe_get_sgx_report_ecall(
     const void* opt_params,
     size_t opt_params_size,

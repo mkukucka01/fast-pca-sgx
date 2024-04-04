@@ -27,7 +27,7 @@ LDFLAGS=$(shell pkg-config oeenclave-$(COMPILER) --libs)
 INCDIR=$(shell pkg-config oeenclave-$(COMPILER) --variable=includedir)
 
 all:
-	$(MAKE) build
+	$(MAKE) build 
 	$(MAKE) keys
 	$(MAKE) sign
 

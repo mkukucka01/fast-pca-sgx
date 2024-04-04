@@ -42,9 +42,7 @@ Eigenpair(const int n) : value(0.0), length(n), vector(new double[n]) {} //Const
 
 double** ReadData(string inputFileName, int n, int m);
 
-double** CenterMatrix(double **A, int n, int m);
-
-double** CovarianceMatrix(double **A, int n, int m);
+double** CovarianceMatrix(oe_enclave_t* enclave, oe_result_t* result, double **A, int n, int m);
 
 Eigenpair power_method(oe_enclave_t* enclave, oe_result_t* result, double **A, double *v, int n, double tol);
 

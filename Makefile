@@ -21,3 +21,7 @@ run:
 
 simulate:
 	host/fast_pca_host ./enclave/enclave.signed --simulate
+
+diff:
+	diff ../fast-pca/coffeeAI_eigenvalues.csv coffeeAI_eigenvalues.csv
+	diff ../fast-pca/coffeeAI_principal_components.csv coffeeAI_principal_components.csv

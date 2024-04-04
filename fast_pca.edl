@@ -9,8 +9,8 @@ enclave {
      *  [*]: implies to import all functions.
      */
 
-     from "openenclave/edl/syscall.edl" import *;
-     from "platform.edl" import *;
+    from "openenclave/edl/syscall.edl" import *;
+    from "platform.edl" import *;
 
 
     // define ECALLs
@@ -39,12 +39,13 @@ enclave {
             size_t len2
         );
 
-        // public double** enclave_CenterMatrix(
-        //     [in, count=len] double **A, 
-        //     int n, 
-        //     int m,
-        //     size_t len
-        // );
+        public void enclave_CenterMatrix(
+            [in, count=len] double **result,
+            [in, count=len] double **A, 
+            int n, 
+            int m,
+            size_t len
+        );
 
         // public double** enclave_CovarianceMatrix(
         //     [in, count=len] double **A, 
