@@ -15,11 +15,12 @@ enum
     fast_pca_fcn_id_enclave_DotProduct_av = 2,
     fast_pca_fcn_id_enclave_CenterMatrix = 3,
     fast_pca_fcn_id_enclave_CovarianceMatrix = 4,
-    fast_pca_fcn_id_oe_get_sgx_report_ecall = 5,
-    fast_pca_fcn_id_oe_get_report_v2_ecall = 6,
-    fast_pca_fcn_id_oe_verify_local_report_ecall = 7,
-    fast_pca_fcn_id_oe_sgx_init_context_switchless_ecall = 8,
-    fast_pca_fcn_id_oe_sgx_switchless_enclave_worker_thread_ecall = 9,
+    fast_pca_fcn_id_enclave_deflate_compute = 5,
+    fast_pca_fcn_id_oe_get_sgx_report_ecall = 6,
+    fast_pca_fcn_id_oe_get_report_v2_ecall = 7,
+    fast_pca_fcn_id_oe_verify_local_report_ecall = 8,
+    fast_pca_fcn_id_oe_sgx_init_context_switchless_ecall = 9,
+    fast_pca_fcn_id_oe_sgx_switchless_enclave_worker_thread_ecall = 10,
     fast_pca_fcn_id_trusted_call_id_max = OE_ENUM_MAX
 };
 
@@ -31,6 +32,7 @@ static const oe_ecall_info_t _fast_pca_ecall_info_table[] =
     { "enclave_DotProduct_av" },
     { "enclave_CenterMatrix" },
     { "enclave_CovarianceMatrix" },
+    { "enclave_deflate_compute" },
     { "oe_get_sgx_report_ecall" },
     { "oe_get_report_v2_ecall" },
     { "oe_verify_local_report_ecall" },
@@ -100,6 +102,19 @@ typedef struct _enclave_CovarianceMatrix_args_t
     int m;
     size_t len;
 } enclave_CovarianceMatrix_args_t;
+
+typedef struct _enclave_deflate_compute_args_t
+{
+    oe_result_t oe_result;
+    uint8_t* deepcopy_out_buffer;
+    size_t deepcopy_out_buffer_size;
+    double** A;
+    double* eigenpair_vector;
+    double lambda;
+    int length;
+    size_t len1;
+    size_t len2;
+} enclave_deflate_compute_args_t;
 
 typedef struct _oe_get_sgx_report_ecall_args_t
 {
@@ -707,6 +722,118 @@ done:
 }
 
 OE_WEAK_ALIAS(fast_pca_enclave_CovarianceMatrix, enclave_CovarianceMatrix);
+
+oe_result_t fast_pca_enclave_deflate_compute(
+    oe_enclave_t* enclave,
+    double** A,
+    double* eigenpair_vector,
+    double lambda,
+    int length,
+    size_t len1,
+    size_t len2)
+{
+    oe_result_t _result = OE_FAILURE;
+
+    static uint64_t global_id = OE_GLOBAL_ECALL_ID_NULL;
+
+    /* Marshalling struct. */
+    enclave_deflate_compute_args_t _args, *_pargs_in = NULL, *_pargs_out = NULL;
+    /* Marshalling buffer and sizes. */
+    size_t _input_buffer_size = 0;
+    size_t _output_buffer_size = 0;
+    size_t _total_buffer_size = 0;
+    uint8_t* _buffer = NULL;
+    uint8_t* _input_buffer = NULL;
+    uint8_t* _output_buffer = NULL;
+    size_t _input_buffer_offset = 0;
+    size_t _output_buffer_offset = 0;
+    size_t _output_bytes_written = 0;
+
+    /* Fill marshalling struct. */
+    memset(&_args, 0, sizeof(_args));
+    _args.A = (double**)A;
+    _args.eigenpair_vector = (double*)eigenpair_vector;
+    _args.lambda = lambda;
+    _args.length = length;
+    _args.len1 = len1;
+    _args.len2 = len2;
+
+    /* Compute input buffer size. Include in and in-out parameters. */
+    OE_ADD_SIZE(_input_buffer_size, sizeof(enclave_deflate_compute_args_t));
+    if (A)
+        OE_ADD_ARG_SIZE(_input_buffer_size, _args.len1, sizeof(double*));
+    if (eigenpair_vector)
+        OE_ADD_ARG_SIZE(_input_buffer_size, _args.len2, sizeof(double));
+    
+    /* Compute output buffer size. Include out and in-out parameters. */
+    OE_ADD_SIZE(_output_buffer_size, sizeof(enclave_deflate_compute_args_t));
+    /* There were no corresponding parameters. */
+    
+    /* Allocate marshalling buffer. */
+    _total_buffer_size = _input_buffer_size;
+    OE_ADD_SIZE(_total_buffer_size, _output_buffer_size);
+    _buffer = (uint8_t*)oe_malloc(_total_buffer_size);
+    _input_buffer = _buffer;
+    _output_buffer = _buffer + _input_buffer_size;
+    if (_buffer == NULL)
+    {
+        _result = OE_OUT_OF_MEMORY;
+        goto done;
+    }
+    
+    /* Serialize buffer inputs (in and in-out parameters). */
+    _pargs_in = (enclave_deflate_compute_args_t*)_input_buffer;
+    OE_ADD_SIZE(_input_buffer_offset, sizeof(*_pargs_in));
+    if (A)
+        OE_WRITE_IN_PARAM(A, _args.len1, sizeof(double*), double**);
+    if (eigenpair_vector)
+        OE_WRITE_IN_PARAM(eigenpair_vector, _args.len2, sizeof(double), double*);
+    
+    /* Copy args structure (now filled) to input buffer. */
+    memcpy(_pargs_in, &_args, sizeof(*_pargs_in));
+
+    /* Call enclave function. */
+    if ((_result = oe_call_enclave_function(
+             enclave,
+             &global_id,
+             _fast_pca_ecall_info_table[fast_pca_fcn_id_enclave_deflate_compute].name,
+             _input_buffer,
+             _input_buffer_size,
+             _output_buffer,
+             _output_buffer_size,
+             &_output_bytes_written)) != OE_OK)
+        goto done;
+
+    /* Currently exactly _output_buffer_size bytes must be written. */
+    if (_output_bytes_written != _output_buffer_size)
+    {
+        _result = OE_FAILURE;
+        goto done;
+    }
+
+    /* Setup output arg struct pointer. */
+    _pargs_out = (enclave_deflate_compute_args_t*)_output_buffer;
+    OE_ADD_SIZE(_output_buffer_offset, sizeof(*_pargs_out));
+
+    /* Check if the call succeeded. */
+    if ((_result = _pargs_out->oe_result) != OE_OK)
+        goto done;
+
+    /* Unmarshal return value and out, in-out parameters. */
+    /* No return value. */
+
+    /* There were no out nor in-out parameters. */
+
+    _result = OE_OK;
+
+done:
+    if (_buffer)
+        oe_free(_buffer);
+
+    return _result;
+}
+
+OE_WEAK_ALIAS(fast_pca_enclave_deflate_compute, enclave_deflate_compute);
 
 oe_result_t fast_pca_oe_get_sgx_report_ecall(
     oe_enclave_t* enclave,
@@ -7905,7 +8032,7 @@ oe_result_t oe_create_fast_pca_enclave(
                _fast_pca_ocall_function_table,
                87,
                _fast_pca_ecall_info_table,
-                10,
+                11,
                enclave);
 }
 

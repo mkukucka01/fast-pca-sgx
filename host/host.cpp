@@ -129,7 +129,7 @@ int main(int argc, const char* argv[]) {
 	if (result != OE_OK) {
 		fprintf(
 			stderr,
-			"error in enclave_DotProduct_av: %s\n",
+			"error in DotProduct_av: %s\n",
 			oe_result_str(result));
 		return 0;
   	}

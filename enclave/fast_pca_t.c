@@ -18,11 +18,12 @@ enum
     fast_pca_fcn_id_enclave_DotProduct_av = 2,
     fast_pca_fcn_id_enclave_CenterMatrix = 3,
     fast_pca_fcn_id_enclave_CovarianceMatrix = 4,
-    fast_pca_fcn_id_oe_get_sgx_report_ecall = 5,
-    fast_pca_fcn_id_oe_get_report_v2_ecall = 6,
-    fast_pca_fcn_id_oe_verify_local_report_ecall = 7,
-    fast_pca_fcn_id_oe_sgx_init_context_switchless_ecall = 8,
-    fast_pca_fcn_id_oe_sgx_switchless_enclave_worker_thread_ecall = 9,
+    fast_pca_fcn_id_enclave_deflate_compute = 5,
+    fast_pca_fcn_id_oe_get_sgx_report_ecall = 6,
+    fast_pca_fcn_id_oe_get_report_v2_ecall = 7,
+    fast_pca_fcn_id_oe_verify_local_report_ecall = 8,
+    fast_pca_fcn_id_oe_sgx_init_context_switchless_ecall = 9,
+    fast_pca_fcn_id_oe_sgx_switchless_enclave_worker_thread_ecall = 10,
     fast_pca_fcn_id_trusted_call_id_max = OE_ENUM_MAX
 };
 
@@ -88,6 +89,19 @@ typedef struct _enclave_CovarianceMatrix_args_t
     int m;
     size_t len;
 } enclave_CovarianceMatrix_args_t;
+
+typedef struct _enclave_deflate_compute_args_t
+{
+    oe_result_t oe_result;
+    uint8_t* deepcopy_out_buffer;
+    size_t deepcopy_out_buffer_size;
+    double** A;
+    double* eigenpair_vector;
+    double lambda;
+    int length;
+    size_t len1;
+    size_t len2;
+} enclave_deflate_compute_args_t;
 
 typedef struct _oe_get_sgx_report_ecall_args_t
 {
@@ -479,6 +493,74 @@ done:
         _pargs_out->oe_result = _result;
 }
 
+static void ecall_enclave_deflate_compute(
+    uint8_t* input_buffer,
+    size_t input_buffer_size,
+    uint8_t* output_buffer,
+    size_t output_buffer_size,
+    size_t* output_bytes_written)
+{
+    oe_result_t _result = OE_FAILURE;
+
+    /* Prepare parameters. */
+    enclave_deflate_compute_args_t* _pargs_in = (enclave_deflate_compute_args_t*)input_buffer;
+    enclave_deflate_compute_args_t* _pargs_out = (enclave_deflate_compute_args_t*)output_buffer;
+
+    size_t _input_buffer_offset = 0;
+    size_t _output_buffer_offset = 0;
+    OE_ADD_SIZE(_input_buffer_offset, sizeof(*_pargs_in));
+    OE_ADD_SIZE(_output_buffer_offset, sizeof(*_pargs_out));
+
+    if (input_buffer_size < sizeof(*_pargs_in) || output_buffer_size < sizeof(*_pargs_in))
+        goto done;
+
+    /* Make sure input and output buffers lie within the enclave. */
+    /* oe_is_within_enclave explicitly checks if buffers are null or not. */
+    if (!oe_is_within_enclave(input_buffer, input_buffer_size))
+        goto done;
+
+    if (!oe_is_within_enclave(output_buffer, output_buffer_size))
+        goto done;
+
+    /* Set in and in-out pointers. */
+    if (_pargs_in->A)
+        OE_SET_IN_POINTER(A, _pargs_in->len1, sizeof(double*), double**);
+    if (_pargs_in->eigenpair_vector)
+        OE_SET_IN_POINTER(eigenpair_vector, _pargs_in->len2, sizeof(double), double*);
+
+    /* Set out and in-out pointers. */
+    /* In-out parameters are copied to output buffer. */
+    /* There were no out nor in-out parameters. */
+
+    /* Check that in/in-out strings are null terminated. */
+    /* There were no in nor in-out string parameters. */
+
+    /* lfence after checks. */
+    oe_lfence();
+
+    /* Call user function. */
+    enclave_deflate_compute(
+        _pargs_in->A,
+        _pargs_in->eigenpair_vector,
+        _pargs_in->lambda,
+        _pargs_in->length,
+        _pargs_in->len1,
+        _pargs_in->len2);
+
+    /* There is no deep-copyable out parameter. */
+    _pargs_out->deepcopy_out_buffer = NULL;
+    _pargs_out->deepcopy_out_buffer_size = 0;
+
+    /* Success. */
+    _result = OE_OK;
+    *output_bytes_written = _output_buffer_offset;
+
+done:
+    if (output_buffer_size >= sizeof(*_pargs_out) &&
+        oe_is_within_enclave(_pargs_out, output_buffer_size))
+        _pargs_out->oe_result = _result;
+}
+
 static void ecall_oe_get_sgx_report_ecall(
     uint8_t* input_buffer,
     size_t input_buffer_size,
@@ -846,6 +928,7 @@ oe_ecall_func_t oe_ecalls_table[] = {
     (oe_ecall_func_t) ecall_enclave_DotProduct_av,
     (oe_ecall_func_t) ecall_enclave_CenterMatrix,
     (oe_ecall_func_t) ecall_enclave_CovarianceMatrix,
+    (oe_ecall_func_t) ecall_enclave_deflate_compute,
     (oe_ecall_func_t) ecall_oe_get_sgx_report_ecall,
     (oe_ecall_func_t) ecall_oe_get_report_v2_ecall,
     (oe_ecall_func_t) ecall_oe_verify_local_report_ecall,

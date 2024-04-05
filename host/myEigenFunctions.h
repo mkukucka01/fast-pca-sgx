@@ -23,10 +23,17 @@ struct Eigenpair {
   void normalize(oe_enclave_t* enclave, oe_result_t* result) {
     // Set eigenvalue to norm of vector and normalize eigenvector
     *result = enclave_DotProduct_vv(enclave, &value, vector, vector, length, length);
+    if (*result != OE_OK) {
+		fprintf(
+			stderr,
+			"error in normalize: %s\n",
+			oe_result_str(*result));
+		return;
+  }
     value = sqrt(value);
     for (int i=0; i<length; i++)
       vector[i]/= value;
-  }; //
+  }; 
 
   void print() {
     std::cout << value << ": \t";

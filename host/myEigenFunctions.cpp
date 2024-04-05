@@ -102,6 +102,13 @@ Eigenpair power_method(oe_enclave_t* enclave, oe_result_t* result, double **A, d
   do {
     lambda = eigenpair.value;
     *result = enclave_DotProduct_av(enclave, eigenpair.vector, A, eigenpair.vector, eigenpair.length, eigenpair.length*eigenpair.length, eigenpair.length);
+    if (*result != OE_OK) {
+		fprintf(
+			stderr,
+			"error in dotproduct_av: %s\n",
+			oe_result_str(*result));
+		return 0;
+  }
     eigenpair.normalize(enclave, result);
 	  
   } while (abs(eigenpair.value - lambda)/abs(eigenpair.value) > tol);
@@ -118,16 +125,23 @@ void deflate(oe_enclave_t* enclave, oe_result_t* result, double **A, Eigenpair e
 
   // store the eigenvalue before normalising
 	double lambda = eigenpair.value;
-	double deflator;
+	// double deflator;
 	eigenpair.normalize(enclave, result);
-
-	for (int i = 0; i < eigenpair.length; i++) {
-		for (int j = 0; j < eigenpair.length; j++) {
-			// calculate value to deflate each entry in the original matrix by
-			deflator = lambda * eigenpair.vector[i] * eigenpair.vector[j];
-			A[i][j] = A[i][j] - deflator;
-		}
-	}
+  *result = enclave_deflate_compute(enclave, A, eigenpair.vector, lambda, eigenpair.length, eigenpair.length*eigenpair.length, eigenpair.length);
+  if (*result != OE_OK) {
+		fprintf(
+			stderr,
+			"error in deflate compute: %s\n",
+			oe_result_str(*result));
+		return;
+  }
+	// for (int i = 0; i < eigenpair.length; i++) {
+	// 	for (int j = 0; j < eigenpair.length; j++) {
+	// 		// calculate value to deflate each entry in the original matrix by
+	// 		deflator = lambda * eigenpair.vector[i] * eigenpair.vector[j];
+	// 		A[i][j] = A[i][j] - deflator;
+	// 	}
+	// }
 }
 
 

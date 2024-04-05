@@ -118,3 +118,12 @@ void enclave_CovarianceMatrix(double **cov, double **A, int n, int m, size_t len
     
   // return cov;
 }
+
+void enclave_deflate_compute(double **A, double *eigenpair_vector, double lambda, int length, size_t len1, size_t len2) {
+	for (int i = 0; i < length; i++) {
+		for (int j = 0; j < length; j++) {
+			// calculate value to deflate each entry in the original matrix by
+			A[i][j] = A[i][j] - (lambda * eigenpair_vector[i] * eigenpair_vector[j]);
+		}
+	}
+}

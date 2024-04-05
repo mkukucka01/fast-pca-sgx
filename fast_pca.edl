@@ -55,14 +55,14 @@ enclave {
             size_t len
         );
 
-        // public Eigenpair enclave_power_method(
-        //     [in, count=len1] double **A, 
-        //     [in, count=len2] double *v, 
-        //     int n, 
-        //     double tol,
-        //     size_t len1,
-        //     size_t len2
-        // );
+        public void enclave_deflate_compute(
+            [in, count=len1] double **A,
+            [in, count=len2] double *eigenpair_vector, 
+            double lambda, 
+            int length,
+            size_t len1,
+            size_t len2
+        );
 
     };
 };

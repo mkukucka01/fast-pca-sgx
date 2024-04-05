@@ -61,6 +61,15 @@ oe_result_t enclave_CovarianceMatrix(
     int m,
     size_t len);
 
+oe_result_t enclave_deflate_compute(
+    oe_enclave_t* enclave,
+    double** A,
+    double* eigenpair_vector,
+    double lambda,
+    int length,
+    size_t len1,
+    size_t len2);
+
 oe_result_t oe_get_sgx_report_ecall(
     oe_enclave_t* enclave,
     oe_result_t* _retval,
