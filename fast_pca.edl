@@ -47,12 +47,13 @@ enclave {
             size_t len
         );
 
-        // public double** enclave_CovarianceMatrix(
-        //     [in, count=len] double **A, 
-        //     int n, 
-        //     int m,
-        //     size_t len
-        // );
+        public void enclave_CovarianceMatrix(
+            [in, count=len] double **cov,
+            [in, count=len] double **A, 
+            int n, 
+            int m,
+            size_t len
+        );
 
         // public Eigenpair enclave_power_method(
         //     [in, count=len1] double **A, 

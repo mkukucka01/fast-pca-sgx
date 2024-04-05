@@ -173,8 +173,11 @@ int main(int argc, const char* argv[]) {
 	print_matrix(C, 3, 3);
 	infile.close();
 
-	double** cov = CovarianceMatrix(enclave, &result, C, 3, 3);
-	
+	double** cov = new double* [3];
+	for (int i = 0; i < 3; i++) {
+    	cov[i] = new double [3];
+	}
+	result = enclave_CovarianceMatrix(enclave, cov, C, 3, 3, 3*3);
 	if (result != OE_OK) {
 		fprintf(
 			stderr,
@@ -227,7 +230,12 @@ int main(int argc, const char* argv[]) {
 	}
 
 	//print_matrix(spectra, N, M);
-	cov = CovarianceMatrix(enclave, &result, spectra, N, M);
+	delete[] cov; // free memory
+	cov = new double* [M];
+	for (int i = 0; i < M; i++) {
+    	cov[i] = new double [M];
+	}
+	result = enclave_CovarianceMatrix(enclave, cov, spectra, N, M, N*M);
 	if (result != OE_OK) {
 		fprintf(
 			stderr,

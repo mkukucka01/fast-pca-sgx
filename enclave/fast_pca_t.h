@@ -41,6 +41,13 @@ void enclave_CenterMatrix(
     int m,
     size_t len);
 
+void enclave_CovarianceMatrix(
+    double** cov,
+    double** A,
+    int n,
+    int m,
+    size_t len);
+
 oe_result_t oe_get_sgx_report_ecall(
     const void* opt_params,
     size_t opt_params_size,

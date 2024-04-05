@@ -130,42 +130,4 @@ void deflate(oe_enclave_t* enclave, oe_result_t* result, double **A, Eigenpair e
 	}
 }
 
-double** CovarianceMatrix(oe_enclave_t* enclave, oe_result_t* result, double **A, int n, int m)
-{
-  //
-  //  This is a function that takes a nxm-matrix A and computes its mxm covariance matrix.
-  //
-      
-  double **cov = new double* [m];
-  double **cA = new double* [n];
-  for (int row = 0; row < n; row++) {
-    cA[row] = new double [m];
-  }
 
-  *result = enclave_CenterMatrix(enclave, cA, A, n, m, n*m);
-  if (*result != OE_OK) {
-    fprintf(
-        stderr,
-        "error in covariance matrix: %s\n",
-        oe_result_str(*result));
-    return NULL;
-  }
-  for (int i = 0; i < m; i++) {
-    cov[i] = new double [m];
-  }
-
-  // loop over covariance matrix
-  for (int row = 0; row < m; row++) {
-    for (int col = 0; col < m; col++) {
-      // initialise matrix entry
-      cov[row][col] = 0;
-      for (int i = 0; i < n; i++) {
-        // calculate the entry from multiplying cA with its transpose
-        cov[row][col] += cA[i][row] * cA[i][col];
-      }
-      cov[row][col] /= n - 1.0; // divide by n-1
-    }
-  }
-    
-  return cov;
-}
