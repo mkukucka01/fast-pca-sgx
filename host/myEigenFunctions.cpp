@@ -36,7 +36,7 @@ double** ReadData(string inputFileName, int n, int m)
     string s;
     if (!getline(inputFile, s)) break;
 	    // cout << s << endl;
-    if (l!=0) { // ignore first line, which contains wavelengths
+    if (l!=0) { // ignore first line, which contains wavelengths/header
       istringstream ss(s);
       vector<double> record;
 
