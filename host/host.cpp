@@ -39,15 +39,17 @@ int main(int argc, const char* argv[]) {
 	// PART 1: Initialisation and check function functionality
 	//
 	// ----------------------------------------------------------------------------------------------
-	/* get start timestamp */
- 	struct timeval tv;
-    	gettimeofday(&tv,NULL);
-    	uint64_t start = tv.tv_sec*(uint64_t)1000000+tv.tv_usec;
 
 	// Defining local variables to be used:
     oe_result_t result;
     int ret = 1;
     oe_enclave_t* enclave = NULL;
+
+	uint64_t start; // for benchmarking
+	uint64_t end;
+	uint64_t elapsed;
+	struct timeval tv;
+	
 
     uint32_t flags = OE_ENCLAVE_FLAG_DEBUG;
     if (check_simulate_opt(&argc, argv)) {
@@ -59,6 +61,12 @@ int main(int argc, const char* argv[]) {
         return 0;
     }
     // Create the enclave
+
+	/* get start timestamp */
+ 	
+    	gettimeofday(&tv,NULL);
+    	start = tv.tv_sec*(uint64_t)1000000+tv.tv_usec;
+
     result = oe_create_fast_pca_enclave(
         argv[1], OE_ENCLAVE_TYPE_AUTO, flags, NULL, 0, &enclave);
     if (result != OE_OK) {
@@ -69,6 +77,12 @@ int main(int argc, const char* argv[]) {
             oe_result_str(result));
         return 0;
     }
+
+	/* get elapsed time */
+    	gettimeofday(&tv,NULL);
+    	end = tv.tv_sec*(uint64_t)1000000+tv.tv_usec;
+    	elapsed = end - start;
+	printf("@@@ Enclave creation elapsed time (usec): %lu\n", elapsed);
 
 	int n = 2, nc = 3;
 	// double* v, * result = NULL;
@@ -101,7 +115,16 @@ int main(int argc, const char* argv[]) {
 
 	eigenpair.vector[0] = 2.0;
 	eigenpair.vector[1] = 0.0;
+	/* get start timestamp */
+ 	
+    	gettimeofday(&tv,NULL);
+    	start = tv.tv_sec*(uint64_t)1000000+tv.tv_usec;
 	eigenpair.normalize(enclave, &result);
+	/* get elapsed time */
+    	gettimeofday(&tv,NULL);
+    	end = tv.tv_sec*(uint64_t)1000000+tv.tv_usec;
+    	elapsed = end - start;
+	printf("@@@ normalize() elapsed time (usec): %lu\n", elapsed);
 	if (result != OE_OK) {
 		fprintf(
 			stderr,
@@ -127,7 +150,16 @@ int main(int argc, const char* argv[]) {
 	v[1] = 1.0;
 	
 	double* dot_product_rst = new double[2];
+	/* get start timestamp */
+ 	
+    	gettimeofday(&tv,NULL);
+    	start = tv.tv_sec*(uint64_t)1000000+tv.tv_usec;
 	result = enclave_DotProduct_av(enclave, dot_product_rst, A, v, 2, 2*2, 2);
+	/* get elapsed time */
+    	gettimeofday(&tv,NULL);
+    	end = tv.tv_sec*(uint64_t)1000000+tv.tv_usec;
+    	elapsed = end - start;
+	printf("@@@ DotProduct_av() elapsed time (usec): %lu\n", elapsed);
 	if (result != OE_OK) {
 		fprintf(
 			stderr,
@@ -145,8 +177,16 @@ int main(int argc, const char* argv[]) {
 
 	v[0] = 1.0;
 	v[1] = 1.0;
+	/* get start timestamp */
+ 	
+    	gettimeofday(&tv,NULL);
+    	start = tv.tv_sec*(uint64_t)1000000+tv.tv_usec;
 	eigenpair = power_method(enclave, &result, A, v, 2, TOL);
-
+	/* get elapsed time */
+    	gettimeofday(&tv,NULL);
+    	end = tv.tv_sec*(uint64_t)1000000+tv.tv_usec;
+    	elapsed = end - start;
+	printf("@@@ power_method() elapsed time (usec): %lu\n", elapsed);
 	if (abs(eigenpair.value - 6.0) / 6.0 < TOL) {
 		cout << "OK: Power Method computing largest eigenvalue\n";
 	}
@@ -179,7 +219,16 @@ int main(int argc, const char* argv[]) {
 	for (int i = 0; i < 3; i++) {
     	cov[i] = new double [3];
 	}
+	/* get start timestamp */
+ 	
+    	gettimeofday(&tv,NULL);
+    	start = tv.tv_sec*(uint64_t)1000000+tv.tv_usec;
 	result = enclave_CovarianceMatrix(enclave, cov, C, 3, 3, 3*3);
+	/* get elapsed time */
+    	gettimeofday(&tv,NULL);
+    	end = tv.tv_sec*(uint64_t)1000000+tv.tv_usec;
+    	elapsed = end - start;
+	printf("@@@ CovarianceMatrix elapsed time (usec): %lu\n", elapsed);
 	if (result != OE_OK) {
 		fprintf(
 			stderr,
@@ -205,7 +254,16 @@ int main(int argc, const char* argv[]) {
 	deflate_eigenpair.vector[1] = 1.0;
 	deflate_eigenpair.vector[2] = 0.0;
 
+	/* get start timestamp */
+ 	
+    	gettimeofday(&tv,NULL);
+    	start = tv.tv_sec*(uint64_t)1000000+tv.tv_usec;
 	deflate(enclave, &result, C, deflate_eigenpair);
+	/* get elapsed time */
+    	gettimeofday(&tv,NULL);
+    	end = tv.tv_sec*(uint64_t)1000000+tv.tv_usec;
+    	elapsed = end - start;
+	printf("@@@ deflate() elapsed time (usec): %lu\n", elapsed);
 	if (AE(C[0][0], -0.5) && AE(C[0][1], 0.5) && AE(C[0][2], 0.0) &&
 		AE(C[1][0], 0.5) && AE(C[1][1], -0.5) && AE(C[1][2], 0.0) &&
 		AE(C[2][0], 0.0) && AE(C[2][1], 0.0) && AE(C[2][2], 2.0)
@@ -218,7 +276,7 @@ int main(int argc, const char* argv[]) {
 	}
 
 	// // ----------------------------------------------------------------------------------------------
-	// // PART 2: CSV Testbenches: Coffee spectral dataset
+	// // PART 2: CSV Testbenches: Coffee Spectral Data
 	// // ----------------------------------------------------------------------------------------------
 	// // Test reading of CSV file
 	// double** spectra;
@@ -307,15 +365,15 @@ int main(int argc, const char* argv[]) {
 	// output_values.close();
 
 	// ----------------------------------------------------------------------------------------------
-	// PART 2: CSV Testbench: California housing
-	// "longitude","latitude","housing_median_age","total_rooms","total_bedrooms","population","households","median_income","median_house_value"
+	// PART 2: CSV Testbench: Milk Spectral Data
 	// ----------------------------------------------------------------------------------------------
 	// Test reading of CSV file
+	
 	double** spectra;
 
 	const int N = 431;   // rows
 	const int M = 531;  // columns
-
+	
 	spectra = ReadData("Milk_MIR_Traits_data_2023.csv", N, M);
 
 	if (AE(spectra[0][0], -0.065454953) && AE(spectra[N - 1][M - 1], 0.015999551)) {
@@ -324,7 +382,11 @@ int main(int argc, const char* argv[]) {
 	else {
 		cout << "ERROR: reading of CSV file " << spectra[0][0] << " " << spectra[N - 1][M - 1] << endl;
 	}
-
+	/* get start timestamp */
+ 	
+    	gettimeofday(&tv,NULL);
+    	start = tv.tv_sec*(uint64_t)1000000+tv.tv_usec;
+	
 	// print_matrix(spectra, N, M);
 	delete[] cov; // free memory
 	cov = new double* [M];
@@ -387,6 +449,11 @@ int main(int argc, const char* argv[]) {
 			return 0;
   		}
 	}
+	/* get elapsed time */
+    	gettimeofday(&tv,NULL);
+    	end = tv.tv_sec*(uint64_t)1000000+tv.tv_usec;
+    	elapsed = end - start;
+	printf("@@@ Milk spectral testbench elapsed time (usec): %lu\n", elapsed);
 	// ----------------------------------------------------------------------------------------------
 	// Exporting Data 
 	// ----------------------------------------------------------------------------------------------
@@ -416,15 +483,5 @@ int main(int argc, const char* argv[]) {
 	if (enclave) {
 		oe_terminate_enclave(enclave);
 	}
-
-	/* get elapsed time */
-    	gettimeofday(&tv,NULL);
-    	uint64_t end = tv.tv_sec*(uint64_t)1000000+tv.tv_usec;
-    	uint64_t elapsed = end - start;
-
-	printf("@@@ Elapsed time (usec): %lud\n", elapsed);
-	printf("Processing complete.  Preparing output.\n");
-	fflush(stdout);
-
 	return 0;
 } // end main
