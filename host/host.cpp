@@ -275,119 +275,28 @@ int main(int argc, const char* argv[]) {
 		print_matrix(C, deflate_eigenpair.length, deflate_eigenpair.length);
 	}
 
-	// // ----------------------------------------------------------------------------------------------
-	// // PART 2: CSV Testbenches: Coffee Spectral Data
-	// // ----------------------------------------------------------------------------------------------
-	// // Test reading of CSV file
-	// double** spectra;
-
-	// const int N = 56;   // rows
-	// const int M = 286;  // columns
-
-	// spectra = ReadData("DS19hH2_dk0_FTIR_Spectra_instant_coffee.csv", N, M);
-	// if (AE(spectra[0][0], 21.227620) && AE(spectra[N - 1][M - 1], 1.574679)) {
-	// 	cout << "OK: Reading of CSV file" << endl;
-	// }
-	// else {
-	// 	cout << "ERROR: reading of CSV file" << spectra[0][0] << " " << spectra[N - 1][M - 1] << endl;
-	// }
-
-	// //print_matrix(spectra, N, M);
-	// delete[] cov; // free memory
-	// cov = new double* [M];
-	// for (int i = 0; i < M; i++) {
-    // 	cov[i] = new double [M];
-	// }
-	// result = enclave_CovarianceMatrix(enclave, cov, spectra, N, M, N*M);
-	// if (result != OE_OK) {
-	// 	fprintf(
-	// 		stderr,
-	// 		"error in covariance matrix: %s\n",
-	// 		oe_result_str(result));
-	// 	return 0;
-  	// }
-
-	// // ----------------------------------------------------------------------------------------------
-	// // Compute principal Components
-	// // ----------------------------------------------------------------------------------------------
-	// // Eigenvectors will be of length M
-
-	// const int n_pc = 56; // Number of principal components to compute
-	// double** Eigenvectors = NULL;        // 2D array where the principal components will be stored, row for each PC
-	// double* Eigenvalues = new double[n_pc]; // 1D array where the eigenvalues will be stored, col for each PC
-	// Eigenpair dominant(M);     // Eigenpair that stores the most recently computed eigenpair
-	// double* v_init = new double[M]; // pointer to initial eigenvector estimate
-
-	// // memory allocation
-	// Eigenvectors = new double* [n_pc];
-	// for (int i = 0; i < N; i++) {
-	// 	Eigenvectors[i] = new double[M];
-	// }
-
-	// // construct initial eigenvector guess
-	// v_init[0] = 1.0;
-	// for (int i = 1; i < M; i++) {
-	// 	v_init[i] = 1;
-	// }
-
-	// // Compute first n_pc principal components
-	// for (int i = 0; i < n_pc; i++) {
-	// 	dominant = power_method(enclave, &result, cov, v_init, M, TOL); // compute dominant eigenpair (power method)
-	// 	// store principal component
-	// 	Eigenvectors[i] = dominant.vector;
-	// 	Eigenvalues[i] = dominant.value;
-
-	// 	// deflate matrix with dominant eigenpair
-	// 	deflate(enclave, &result, cov, dominant);
-	// }
-
-	// // ----------------------------------------------------------------------------------------------
-	// // Exporting Data 
-	// // ----------------------------------------------------------------------------------------------
-	
-	// std::ofstream output_vectors("coffeeAI_principal_components.csv");
-
-	// for (int i = 0; i < n_pc; i++) {
-	// 	for (int j = 0; j < M; j++) {
-	// 		// each row corresponds to a principal component
-	// 		output_vectors << Eigenvectors[i][j] << ",";
-	// 	}
-	// 	output_vectors << "\n";
-	// }
-	// output_vectors.close();
-
-	// std::ofstream output_values("coffeeAI_eigenvalues.csv");
-
-	// for (int i = 0; i < n_pc; i++) {
-	// 	// each row corresponds to a principal component
-	// 	output_values << Eigenvalues[i] << "\n";
-	// }
-	// output_values.close();
-
 	// ----------------------------------------------------------------------------------------------
-	// PART 2: CSV Testbench: Milk Spectral Data
+	// PART 2: CSV Testbenches: Coffee Spectral Data
 	// ----------------------------------------------------------------------------------------------
 	// Test reading of CSV file
-	
 	double** spectra;
 
-	const int N = 431;   // rows
-	const int M = 531;  // columns
-	
-	spectra = ReadData("Milk_MIR_Traits_data_2023.csv", N, M);
+	const int N = 56;   // rows
+	const int M = 286;  // columns
 
-	if (AE(spectra[0][0], -0.065454953) && AE(spectra[N - 1][M - 1], 0.015999551)) {
+	spectra = ReadData("DS19hH2_dk0_FTIR_Spectra_instant_coffee.csv", N, M);
+	if (AE(spectra[0][0], 21.227620) && AE(spectra[N - 1][M - 1], 1.574679)) {
 		cout << "OK: Reading of CSV file" << endl;
 	}
 	else {
-		cout << "ERROR: reading of CSV file " << spectra[0][0] << " " << spectra[N - 1][M - 1] << endl;
+		cout << "ERROR: reading of CSV file" << spectra[0][0] << " " << spectra[N - 1][M - 1] << endl;
 	}
 	/* get start timestamp */
  	
     	gettimeofday(&tv,NULL);
     	start = tv.tv_sec*(uint64_t)1000000+tv.tv_usec;
-	
-	// print_matrix(spectra, N, M);
+
+	//print_matrix(spectra, N, M);
 	delete[] cov; // free memory
 	cov = new double* [M];
 	for (int i = 0; i < M; i++) {
@@ -407,14 +316,13 @@ int main(int argc, const char* argv[]) {
 	// ----------------------------------------------------------------------------------------------
 	// Eigenvectors will be of length M
 
-	const int n_pc = 150; // Number of principal components to compute
-	double** Eigenvectors = NULL;        // 2D array where the principal components will be stored, row for each PC
+	const int n_pc = 40; // Number of principal components to compute
+	double** Eigenvectors = new double* [n_pc];      // 2D array where the principal components will be stored, row for each PC
 	double* Eigenvalues = new double[n_pc]; // 1D array where the eigenvalues will be stored, col for each PC
 	Eigenpair dominant(M);     // Eigenpair that stores the most recently computed eigenpair
 	double* v_init = new double[M]; // pointer to initial eigenvector estimate
 
 	// memory allocation
-	Eigenvectors = new double* [n_pc];
 	for (int i = 0; i < N; i++) {
 		Eigenvectors[i] = new double[M];
 	}
@@ -428,50 +336,35 @@ int main(int argc, const char* argv[]) {
 	// Compute first n_pc principal components
 	for (int i = 0; i < n_pc; i++) {
 		dominant = power_method(enclave, &result, cov, v_init, M, TOL); // compute dominant eigenpair (power method)
-		if (result != OE_OK) {
-			fprintf(
-				stderr,
-				"error in power method: %s\n",
-				oe_result_str(result));
-			return 0;
-  		}
 		// store principal component
 		Eigenvectors[i] = dominant.vector;
 		Eigenvalues[i] = dominant.value;
 
 		// deflate matrix with dominant eigenpair
 		deflate(enclave, &result, cov, dominant);
-		if (result != OE_OK) {
-			fprintf(
-				stderr,
-				"error in deflate matrix: %s\n",
-				oe_result_str(result));
-			return 0;
-  		}
 	}
 	/* get elapsed time */
     	gettimeofday(&tv,NULL);
     	end = tv.tv_sec*(uint64_t)1000000+tv.tv_usec;
     	elapsed = end - start;
-	printf("@@@ Milk spectral testbench elapsed time (usec): %lu\n", elapsed);
+	printf("@@@ Coffee spectral elapsed time (usec): %lu\n", elapsed);
+
 	// ----------------------------------------------------------------------------------------------
 	// Exporting Data 
 	// ----------------------------------------------------------------------------------------------
 	
-	std::ofstream output_vectors("milk_principal_components.csv");
+	std::ofstream output_vectors("coffeeAI_principal_components.csv");
 
 	for (int i = 0; i < n_pc; i++) {
 		for (int j = 0; j < M; j++) {
 			// each row corresponds to a principal component
-			// cout << Eigenvectors[i][j] << ",";
 			output_vectors << Eigenvectors[i][j] << ",";
 		}
 		output_vectors << "\n";
-		// cout << "\n";
 	}
 	output_vectors.close();
 
-	std::ofstream output_values("milk_eigenvalues.csv");
+	std::ofstream output_values("coffeeAI_eigenvalues.csv");
 
 	for (int i = 0; i < n_pc; i++) {
 		// each row corresponds to a principal component
@@ -479,6 +372,239 @@ int main(int argc, const char* argv[]) {
 	}
 	output_values.close();
 
+	// // ----------------------------------------------------------------------------------------------
+	// // PART 2: CSV Testbench: Milk Spectral Data
+	// // ----------------------------------------------------------------------------------------------
+	// // Test reading of CSV file
+	
+	// double** spectra;
+
+	// const int N = 431;   // rows
+	// const int M = 531;  // columns
+	
+	// spectra = ReadData("Milk_MIR_Traits_data_2023.csv", N, M);
+
+	// if (AE(spectra[0][0], -0.065454953) && AE(spectra[N - 1][M - 1], 0.015999551)) {
+	// 	cout << "OK: Reading of CSV file" << endl;
+	// }
+	// else {
+	// 	cout << "ERROR: reading of CSV file " << spectra[0][0] << " " << spectra[N - 1][M - 1] << endl;
+	// }
+	// /* get start timestamp */
+ 	
+    // 	gettimeofday(&tv,NULL);
+    // 	start = tv.tv_sec*(uint64_t)1000000+tv.tv_usec;
+	
+	// // print_matrix(spectra, N, M);
+	// delete[] cov; // free memory
+	// cov = new double* [M];
+	// for (int i = 0; i < M; i++) {
+    // 	cov[i] = new double [M];
+	// }
+	// result = enclave_CovarianceMatrix(enclave, cov, spectra, N, M, N*M);
+	// if (result != OE_OK) {
+	// 	fprintf(
+	// 		stderr,
+	// 		"error in covariance matrix: %s\n",
+	// 		oe_result_str(result));
+	// 	return 0;
+  	// }
+
+	// // ----------------------------------------------------------------------------------------------
+	// // Compute principal Components
+	// // ----------------------------------------------------------------------------------------------
+	// // Eigenvectors will be of length M
+
+	// const int n_pc = 10; // Number of principal components to compute
+	// double** Eigenvectors = new double* [n_pc];        // 2D array where the principal components will be stored, row for each PC
+	// double* Eigenvalues = new double[n_pc]; // 1D array where the eigenvalues will be stored, col for each PC
+	// Eigenpair dominant(M);     // Eigenpair that stores the most recently computed eigenpair
+	// double* v_init = new double[M]; // pointer to initial eigenvector estimate
+
+	// // memory allocation
+	// for (int i = 0; i < N; i++) {
+	// 	Eigenvectors[i] = new double[M];
+	// }
+
+	// // construct initial eigenvector guess
+	// v_init[0] = 1.0;
+	// for (int i = 1; i < M; i++) {
+	// 	v_init[i] = 1;
+	// }
+
+	// // Compute first n_pc principal components
+	// for (int i = 0; i < n_pc; i++) {
+	// 	dominant = power_method(enclave, &result, cov, v_init, M, TOL); // compute dominant eigenpair (power method)
+	// 	if (result != OE_OK) {
+	// 		fprintf(
+	// 			stderr,
+	// 			"error in power method: %s\n",
+	// 			oe_result_str(result));
+	// 		return 0;
+  	// 	}
+	// 	// store principal component
+	// 	Eigenvectors[i] = dominant.vector;
+	// 	Eigenvalues[i] = dominant.value;
+
+	// 	// deflate matrix with dominant eigenpair
+	// 	deflate(enclave, &result, cov, dominant);
+	// 	if (result != OE_OK) {
+	// 		fprintf(
+	// 			stderr,
+	// 			"error in deflate matrix: %s\n",
+	// 			oe_result_str(result));
+	// 		return 0;
+  	// 	}
+	// }
+	// /* get elapsed time */
+    // 	gettimeofday(&tv,NULL);
+    // 	end = tv.tv_sec*(uint64_t)1000000+tv.tv_usec;
+    // 	elapsed = end - start;
+	// printf("@@@ Milk spectral testbench elapsed time (usec): %lu\n", elapsed);
+	// // ----------------------------------------------------------------------------------------------
+	// // Exporting Data 
+	// // ----------------------------------------------------------------------------------------------
+	
+	// ofstream output_vectors("milk_principal_components.csv");
+
+	// for (int i = 0; i < n_pc; i++) {
+	// 	for (int j = 0; j < M; j++) {
+	// 		// each row corresponds to a principal component
+	// 		// cout << Eigenvectors[i][j] << ",";
+	// 		output_vectors << Eigenvectors[i][j] << ",";
+	// 	}
+	// 	output_vectors << "\n";
+	// 	// cout << "\n";
+	// }
+	// output_vectors.close();
+
+	// std::ofstream output_values("milk_eigenvalues.csv");
+
+	// for (int i = 0; i < n_pc; i++) {
+	// 	// each row corresponds to a principal component
+	// 	output_values << Eigenvalues[i] << "\n";
+	// }
+	// output_values.close();
+	
+	
+	// // ----------------------------------------------------------------------------------------------
+	// // PART 2: CSV Testbench: Grape Spectral Data
+	// // ----------------------------------------------------------------------------------------------
+	// // Test reading of CSV file
+	
+	// double** spectra;
+
+	// const int N = 274;   // rows
+	// const int M = 205;  // columns
+	
+	// spectra = ReadData("grape_maturity_dataset.csv", N, M);
+
+	// if (AE(spectra[0][0], 144.738) && AE(spectra[N - 1][M - 1], 0.36499172)) {
+	// 	cout << "OK: Reading of CSV file" << endl;
+	// }
+	// else {
+	// 	cout << "ERROR: reading of CSV file " << spectra[0][0] << " " << spectra[N - 1][M - 1] << endl;
+	// }
+	// // print_matrix(spectra, N, M);
+	// /* get start timestamp */
+ 	
+    // 	gettimeofday(&tv,NULL);
+    // 	start = tv.tv_sec*(uint64_t)1000000+tv.tv_usec;
+	
+	// // print_matrix(spectra, N, M);
+	// delete[] cov; // free memory
+	// cov = new double* [M];
+	// for (int i = 0; i < M; i++) {
+    // 	cov[i] = new double [M];
+	// }
+	// result = enclave_CovarianceMatrix(enclave, cov, spectra, N, M, N*M);
+	// if (result != OE_OK) {
+	// 	fprintf(
+	// 		stderr,
+	// 		"error in covariance matrix: %s\n",
+	// 		oe_result_str(result));
+	// 	return 0;
+  	// }
+
+	// // ----------------------------------------------------------------------------------------------
+	// // Compute principal Components
+	// // ----------------------------------------------------------------------------------------------
+	// // Eigenvectors will be of length M
+
+	// const int n_pc = 10; // Number of principal components to compute
+	// double** Eigenvectors = new double* [n_pc];        // 2D array where the principal components will be stored, row for each PC
+	// double* Eigenvalues = new double[n_pc]; // 1D array where the eigenvalues will be stored, col for each PC
+	// Eigenpair dominant(M);     // Eigenpair that stores the most recently computed eigenpair
+	// double* v_init = new double[M]; // pointer to initial eigenvector estimate
+
+	// // memory allocation
+	// for (int i = 0; i < N; i++) {
+	// 	Eigenvectors[i] = new double[M];
+	// }
+
+	// // construct initial eigenvector guess
+	// v_init[0] = 1.0;
+	// for (int i = 1; i < M; i++) {
+	// 	v_init[i] = 1;
+	// }
+
+	// // Compute first n_pc principal components
+	// for (int i = 0; i < n_pc; i++) {
+	// 	dominant = power_method(enclave, &result, cov, v_init, M, TOL); // compute dominant eigenpair (power method)
+	// 	if (result != OE_OK) {
+	// 		fprintf(
+	// 			stderr,
+	// 			"error in power method: %s\n",
+	// 			oe_result_str(result));
+	// 		return 0;
+  	// 	}
+	// 	// store principal component
+	// 	Eigenvectors[i] = dominant.vector;
+	// 	Eigenvalues[i] = dominant.value;
+
+	// 	// deflate matrix with dominant eigenpair
+	// 	deflate(enclave, &result, cov, dominant);
+	// 	if (result != OE_OK) {
+	// 		fprintf(
+	// 			stderr,
+	// 			"error in deflate matrix: %s\n",
+	// 			oe_result_str(result));
+	// 		return 0;
+  	// 	}
+	// }
+	// /* get elapsed time */
+    // 	gettimeofday(&tv,NULL);
+    // 	end = tv.tv_sec*(uint64_t)1000000+tv.tv_usec;
+    // 	elapsed = end - start;
+	// printf("@@@ Grape spectral testbench elapsed time (usec): %lu\n", elapsed);
+	// // ----------------------------------------------------------------------------------------------
+	// // Exporting Data 
+	// // ----------------------------------------------------------------------------------------------
+	
+	// std::ofstream output_vectors("grape_principal_components.csv");
+
+	// for (int i = 0; i < n_pc; i++) {
+	// 	for (int j = 0; j < M; j++) {
+	// 		// each row corresponds to a principal component
+	// 		// cout << Eigenvectors[i][j] << ",";
+	// 		output_vectors << Eigenvectors[i][j] << ",";
+	// 	}
+	// 	output_vectors << "\n";
+	// 	// cout << "\n";
+	// }
+	// output_vectors.close();
+
+	// std::ofstream output_values("grape_eigenvalues.csv");
+
+	// for (int i = 0; i < n_pc; i++) {
+	// 	// each row corresponds to a principal component
+	// 	output_values << Eigenvalues[i] << "\n";
+	// }
+	// output_values.close();
+
+	
+	delete[] Eigenvalues;
+	delete[] Eigenvectors;
 	// Clean up the enclave if we created one
 	if (enclave) {
 		oe_terminate_enclave(enclave);

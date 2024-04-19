@@ -538,14 +538,13 @@ oe_result_t fast_pca_enclave_CenterMatrix(
 
     /* Compute input buffer size. Include in and in-out parameters. */
     OE_ADD_SIZE(_input_buffer_size, sizeof(enclave_CenterMatrix_args_t));
-    if (result)
-        OE_ADD_ARG_SIZE(_input_buffer_size, _args.len, sizeof(double*));
     if (A)
         OE_ADD_ARG_SIZE(_input_buffer_size, _args.len, sizeof(double*));
     
     /* Compute output buffer size. Include out and in-out parameters. */
     OE_ADD_SIZE(_output_buffer_size, sizeof(enclave_CenterMatrix_args_t));
-    /* There were no corresponding parameters. */
+    if (result)
+        OE_ADD_ARG_SIZE(_output_buffer_size, _args.len, sizeof(double*));
     
     /* Allocate marshalling buffer. */
     _total_buffer_size = _input_buffer_size;
@@ -562,8 +561,6 @@ oe_result_t fast_pca_enclave_CenterMatrix(
     /* Serialize buffer inputs (in and in-out parameters). */
     _pargs_in = (enclave_CenterMatrix_args_t*)_input_buffer;
     OE_ADD_SIZE(_input_buffer_offset, sizeof(*_pargs_in));
-    if (result)
-        OE_WRITE_IN_PARAM(result, _args.len, sizeof(double*), double**);
     if (A)
         OE_WRITE_IN_PARAM(A, _args.len, sizeof(double*), double**);
     
@@ -600,7 +597,7 @@ oe_result_t fast_pca_enclave_CenterMatrix(
     /* Unmarshal return value and out, in-out parameters. */
     /* No return value. */
 
-    /* There were no out nor in-out parameters. */
+    OE_READ_OUT_PARAM(result, _args.len, sizeof(double*));
 
     _result = OE_OK;
 
@@ -648,14 +645,13 @@ oe_result_t fast_pca_enclave_CovarianceMatrix(
 
     /* Compute input buffer size. Include in and in-out parameters. */
     OE_ADD_SIZE(_input_buffer_size, sizeof(enclave_CovarianceMatrix_args_t));
-    if (cov)
-        OE_ADD_ARG_SIZE(_input_buffer_size, _args.len, sizeof(double*));
     if (A)
         OE_ADD_ARG_SIZE(_input_buffer_size, _args.len, sizeof(double*));
     
     /* Compute output buffer size. Include out and in-out parameters. */
     OE_ADD_SIZE(_output_buffer_size, sizeof(enclave_CovarianceMatrix_args_t));
-    /* There were no corresponding parameters. */
+    if (cov)
+        OE_ADD_ARG_SIZE(_output_buffer_size, _args.len, sizeof(double*));
     
     /* Allocate marshalling buffer. */
     _total_buffer_size = _input_buffer_size;
@@ -672,8 +668,6 @@ oe_result_t fast_pca_enclave_CovarianceMatrix(
     /* Serialize buffer inputs (in and in-out parameters). */
     _pargs_in = (enclave_CovarianceMatrix_args_t*)_input_buffer;
     OE_ADD_SIZE(_input_buffer_offset, sizeof(*_pargs_in));
-    if (cov)
-        OE_WRITE_IN_PARAM(cov, _args.len, sizeof(double*), double**);
     if (A)
         OE_WRITE_IN_PARAM(A, _args.len, sizeof(double*), double**);
     
@@ -710,7 +704,7 @@ oe_result_t fast_pca_enclave_CovarianceMatrix(
     /* Unmarshal return value and out, in-out parameters. */
     /* No return value. */
 
-    /* There were no out nor in-out parameters. */
+    OE_READ_OUT_PARAM(cov, _args.len, sizeof(double*));
 
     _result = OE_OK;
 
@@ -760,14 +754,13 @@ oe_result_t fast_pca_enclave_deflate_compute(
 
     /* Compute input buffer size. Include in and in-out parameters. */
     OE_ADD_SIZE(_input_buffer_size, sizeof(enclave_deflate_compute_args_t));
-    if (A)
-        OE_ADD_ARG_SIZE(_input_buffer_size, _args.len1, sizeof(double*));
     if (eigenpair_vector)
         OE_ADD_ARG_SIZE(_input_buffer_size, _args.len2, sizeof(double));
     
     /* Compute output buffer size. Include out and in-out parameters. */
     OE_ADD_SIZE(_output_buffer_size, sizeof(enclave_deflate_compute_args_t));
-    /* There were no corresponding parameters. */
+    if (A)
+        OE_ADD_ARG_SIZE(_output_buffer_size, _args.len1, sizeof(double*));
     
     /* Allocate marshalling buffer. */
     _total_buffer_size = _input_buffer_size;
@@ -784,8 +777,6 @@ oe_result_t fast_pca_enclave_deflate_compute(
     /* Serialize buffer inputs (in and in-out parameters). */
     _pargs_in = (enclave_deflate_compute_args_t*)_input_buffer;
     OE_ADD_SIZE(_input_buffer_offset, sizeof(*_pargs_in));
-    if (A)
-        OE_WRITE_IN_PARAM(A, _args.len1, sizeof(double*), double**);
     if (eigenpair_vector)
         OE_WRITE_IN_PARAM(eigenpair_vector, _args.len2, sizeof(double), double*);
     
@@ -822,7 +813,7 @@ oe_result_t fast_pca_enclave_deflate_compute(
     /* Unmarshal return value and out, in-out parameters. */
     /* No return value. */
 
-    /* There were no out nor in-out parameters. */
+    OE_READ_OUT_PARAM(A, _args.len1, sizeof(double*));
 
     _result = OE_OK;
 

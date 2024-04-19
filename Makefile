@@ -8,7 +8,7 @@ export OE_CRYPTO_LIB
 
 sim: 
 	make build;
-	make run
+	make simulate
 
 all: build
 
@@ -19,8 +19,9 @@ build:
 clean:
 	$(MAKE) -C enclave clean
 	$(MAKE) -C host clean
-	rm coffeeAI_eigenvalues.csv
-	rm coffeeAI_principal_components.csv
+	rm *eigenvalues.csv
+	rm *components.csv
+
 
 run:
 	host/fast_pca_host ./enclave/enclave.signed
@@ -33,5 +34,9 @@ diff_coffee:
 	diff ../fast-pca/coffeeAI_principal_components.csv coffeeAI_principal_components.csv
 
 diff_milk:
+	diff ../fast-pca/milk_eigenvalues.csv milk_eigenvalues.csv
+	diff ../fast-pca/milk_principal_components.csv milk_principal_components.csv
+
+diff_grape:
 	diff ../fast-pca/milk_eigenvalues.csv milk_eigenvalues.csv
 	diff ../fast-pca/milk_principal_components.csv milk_principal_components.csv

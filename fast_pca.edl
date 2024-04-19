@@ -40,7 +40,7 @@ enclave {
         );
 
         public void enclave_CenterMatrix(
-            [in, count=len] double **result,
+            [out, count=len] double **result,
             [in, count=len] double **A, 
             int n, 
             int m,
@@ -48,7 +48,7 @@ enclave {
         );
 
         public void enclave_CovarianceMatrix(
-            [in, count=len] double **cov,
+            [out, count=len] double **cov,
             [in, count=len] double **A, 
             int n, 
             int m,
@@ -56,7 +56,7 @@ enclave {
         );
 
         public void enclave_deflate_compute(
-            [in, count=len1] double **A,
+            [out, count=len1] double **A,
             [in, count=len2] double *eigenpair_vector, 
             double lambda, 
             int length,

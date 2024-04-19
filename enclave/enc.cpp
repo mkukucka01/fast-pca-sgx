@@ -65,12 +65,7 @@ void enclave_CenterMatrix(double **result, double **A, int n, int m, size_t len)
 	//
       
 	// initialise new vars
-    //   double **result = new double* [n];
 	double mean;
-      
-	//   allocate memory
-    //   for(int row = 0; row < n; row++)
-	// 	result[row] = new double [m];
 
 	// loop over entire matrix
 	for (int col = 0; col < m; col++) {
@@ -86,7 +81,6 @@ void enclave_CenterMatrix(double **result, double **A, int n, int m, size_t len)
 			result[row][col] = A[row][col] - mean;
 		}
 	}
-    // return result;
 }
 
 void enclave_CovarianceMatrix(double **cov, double **A, int n, int m, size_t len)
@@ -95,13 +89,12 @@ void enclave_CovarianceMatrix(double **cov, double **A, int n, int m, size_t len
   //  This is a function that takes a nxm-matrix A and computes its mxm covariance matrix.
   //
       
-  // double **cov = new double* [m];
   double **cA = new double* [n];
   for (int row = 0; row < n; row++) {
     cA[row] = new double [m];
   }
 
-  enclave_CenterMatrix(cA, A, n, m, n*m); // trusted function call
+  enclave_CenterMatrix(cA, A, n, m, len); // trusted function call
 
   // loop over covariance matrix
   for (int row = 0; row < m; row++) {
@@ -114,9 +107,10 @@ void enclave_CovarianceMatrix(double **cov, double **A, int n, int m, size_t len
       }
       cov[row][col] /= n - 1.0; // divide by n-1
     }
+  }	
+  for (int i = 0; i < n; i++) {
+	delete[] cA[i]; 
   }
-    
-  // return cov;
 }
 
 void enclave_deflate_compute(double **A, double *eigenpair_vector, double lambda, int length, size_t len1, size_t len2) {

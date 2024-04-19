@@ -9,6 +9,7 @@
 #include "myEigenFunctions.h"
 #include "fast_pca_u.h"
 #include <openenclave/host.h>
+#include <sys/time.h>
 
 using namespace std;
 

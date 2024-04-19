@@ -389,14 +389,13 @@ static void ecall_enclave_CenterMatrix(
         goto done;
 
     /* Set in and in-out pointers. */
-    if (_pargs_in->result)
-        OE_SET_IN_POINTER(result, _pargs_in->len, sizeof(double*), double**);
     if (_pargs_in->A)
         OE_SET_IN_POINTER(A, _pargs_in->len, sizeof(double*), double**);
 
     /* Set out and in-out pointers. */
     /* In-out parameters are copied to output buffer. */
-    /* There were no out nor in-out parameters. */
+    if (_pargs_in->result)
+        OE_SET_OUT_POINTER(result, _pargs_in->len, sizeof(double*), double**);
 
     /* Check that in/in-out strings are null terminated. */
     /* There were no in nor in-out string parameters. */
@@ -456,14 +455,13 @@ static void ecall_enclave_CovarianceMatrix(
         goto done;
 
     /* Set in and in-out pointers. */
-    if (_pargs_in->cov)
-        OE_SET_IN_POINTER(cov, _pargs_in->len, sizeof(double*), double**);
     if (_pargs_in->A)
         OE_SET_IN_POINTER(A, _pargs_in->len, sizeof(double*), double**);
 
     /* Set out and in-out pointers. */
     /* In-out parameters are copied to output buffer. */
-    /* There were no out nor in-out parameters. */
+    if (_pargs_in->cov)
+        OE_SET_OUT_POINTER(cov, _pargs_in->len, sizeof(double*), double**);
 
     /* Check that in/in-out strings are null terminated. */
     /* There were no in nor in-out string parameters. */
@@ -523,14 +521,13 @@ static void ecall_enclave_deflate_compute(
         goto done;
 
     /* Set in and in-out pointers. */
-    if (_pargs_in->A)
-        OE_SET_IN_POINTER(A, _pargs_in->len1, sizeof(double*), double**);
     if (_pargs_in->eigenpair_vector)
         OE_SET_IN_POINTER(eigenpair_vector, _pargs_in->len2, sizeof(double), double*);
 
     /* Set out and in-out pointers. */
     /* In-out parameters are copied to output buffer. */
-    /* There were no out nor in-out parameters. */
+    if (_pargs_in->A)
+        OE_SET_OUT_POINTER(A, _pargs_in->len1, sizeof(double*), double**);
 
     /* Check that in/in-out strings are null terminated. */
     /* There were no in nor in-out string parameters. */
